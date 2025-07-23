@@ -36,7 +36,7 @@ const ResourceHub: React.FC = () => {
       category: 'stress',
       type: 'article',
       author: 'Dr. Sarah Johnson',
-      createdAt: new Date('2024-01-15'),
+      createdAt: new Date('2024-07-15'),
       views: 1847,
       thumbnail: 'https://images.pexels.com/photos/3760069/pexels-photo-3760069.jpeg?auto=compress&cs=tinysrgb&w=400'
     },
@@ -47,7 +47,7 @@ const ResourceHub: React.FC = () => {
       category: 'anxiety',
       type: 'video',
       author: 'Mind Mate Team',
-      createdAt: new Date('2024-01-12'),
+      createdAt: new Date('2024-07-12'),
       views: 892,
       thumbnail: 'https://images.pexels.com/photos/3094215/pexels-photo-3094215.jpeg?auto=compress&cs=tinysrgb&w=400'
     },
@@ -58,7 +58,7 @@ const ResourceHub: React.FC = () => {
       category: 'motivation',
       type: 'guide',
       author: 'Prof. Michael Chen',
-      createdAt: new Date('2024-01-10'),
+      createdAt: new Date('2024-07-10'),
       views: 634,
       thumbnail: 'https://images.pexels.com/photos/3760263/pexels-photo-3760263.jpeg?auto=compress&cs=tinysrgb&w=400'
     },
@@ -69,7 +69,7 @@ const ResourceHub: React.FC = () => {
       category: 'self-care',
       type: 'guide',
       author: 'Lisa Rodriguez',
-      createdAt: new Date('2024-01-08'),
+      createdAt: new Date('2024-07-08'),
       views: 1203,
       thumbnail: 'https://images.pexels.com/photos/3768911/pexels-photo-3768911.jpeg?auto=compress&cs=tinysrgb&w=400'
     },
@@ -80,7 +80,7 @@ const ResourceHub: React.FC = () => {
       category: 'anxiety',
       type: 'article',
       author: 'Dr. Emily Watson',
-      createdAt: new Date('2024-01-05'),
+      createdAt: new Date('2024-07-05'),
       views: 756,
       thumbnail: 'https://images.pexels.com/photos/3760067/pexels-photo-3760067.jpeg?auto=compress&cs=tinysrgb&w=400'
     },
@@ -91,7 +91,7 @@ const ResourceHub: React.FC = () => {
       category: 'academic',
       type: 'video',
       author: 'Dr. James Park',
-      createdAt: new Date('2024-01-03'),
+      createdAt: new Date('2024-07-03'),
       views: 445,
       thumbnail: 'https://images.pexels.com/photos/3760265/pexels-photo-3760265.jpeg?auto=compress&cs=tinysrgb&w=400'
     }
@@ -213,7 +213,10 @@ const ResourceHub: React.FC = () => {
                     <Eye className="h-4 w-4 mr-1" />
                     {resource.views} views
                   </div>
-                  <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm">
+                  <button 
+                    onClick={() => window.open(resource.thumbnail, '_blank')}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                  >
                     View Resource
                   </button>
                 </div>

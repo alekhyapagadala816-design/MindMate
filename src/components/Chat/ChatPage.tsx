@@ -18,8 +18,123 @@ const ChatPage: React.FC = () => {
   const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
   const [newMessage, setNewMessage] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [chatRooms, setChatRooms] = useState<ChatRoom[]>([
+    {
+      id: '1',
+      participants: [
+        {
+          id: 'counsellor1',
+          name: 'Dr. Sarah Johnson',
+          email: 'sarah@mindmate.com',
+          role: 'counsellor',
+          joinedAt: new Date(),
+          isOnline: true
+        }
+      ],
+      messages: [
+        {
+          id: '1',
+          content: 'Hi! I\'m here to support you. How are you feeling today?',
+          sender: {
+            id: 'counsellor1',
+            name: 'Dr. Sarah Johnson',
+            email: 'sarah@mindmate.com',
+            role: 'counsellor',
+            joinedAt: new Date()
+          },
+          timestamp: new Date('2024-07-15T10:30:00'),
+          read: true
+        },
+        {
+          id: '2',
+          content: 'Thank you for reaching out. I\'ve been feeling quite overwhelmed with my coursework lately.',
+          sender: user!,
+          timestamp: new Date('2024-07-15T10:32:00'),
+          read: true
+        },
+        {
+          id: '3',
+          content: 'I understand that feeling. Academic pressure can be really challenging. Can you tell me more about what specifically is making you feel overwhelmed?',
+          sender: {
+            id: 'counsellor1',
+            name: 'Dr. Sarah Johnson',
+            email: 'sarah@mindmate.com',
+            role: 'counsellor',
+            joinedAt: new Date()
+          },
+          timestamp: new Date('2024-07-15T10:35:00'),
+          read: true
+        }
+      ],
+      type: 'counsellor'
+    },
+    {
+      id: '2',
+      participants: [
+        {
+          id: 'peer1',
+          name: 'Alex Chen',
+          email: 'alex@example.com',
+          role: 'student',
+          joinedAt: new Date(),
+          isOnline: false
+        }
+      ],
+      messages: [
+        {
+          id: '4',
+          content: 'Hey! I saw your post about study anxiety. I totally relate to that feeling.',
+          sender: {
+            id: 'peer1',
+            name: 'Alex Chen',
+            email: 'alex@example.com',
+            role: 'student',
+            joinedAt: new Date()
+          },
+          timestamp: new Date('2024-07-14T16:20:00'),
+          read: true
+        },
+        {
+          id: '5',
+          content: 'Thank you for reaching out! It really helps to know I\'m not alone in this.',
+          sender: user!,
+          timestamp: new Date('2024-07-14T16:25:00'),
+          read: true
+        }
+      ],
+      type: 'peer'
+    },
+    {
+      id: '3',
+      participants: [
+        {
+          id: 'counsellor2',
+          name: 'Dr. Michael Park',
+          email: 'michael@mindmate.com',
+          role: 'counsellor',
+          joinedAt: new Date(),
+          isOnline: true
+        }
+      ],
+      messages: [
+        {
+          id: '6',
+          content: 'Hello! I wanted to follow up on our session last week. How have you been feeling?',
+          sender: {
+            id: 'counsellor2',
+            name: 'Dr. Michael Park',
+            email: 'michael@mindmate.com',
+            role: 'counsellor',
+            joinedAt: new Date()
+          },
+          timestamp: new Date('2024-07-13T14:15:00'),
+          read: false
+        }
+      ],
+      type: 'counsellor'
+    }
+  ]);
 
-  const chatRooms: ChatRoom[] = [
     {
       id: '1',
       participants: [
@@ -130,11 +245,6 @@ const ChatPage: React.FC = () => {
           },
           timestamp: new Date('2024-01-13T14:15:00'),
           read: false
-        }
-      ],
-      type: 'counsellor'
-    }
-  ];
 
   const availableCounsellors = [
     {
@@ -164,8 +274,22 @@ const ChatPage: React.FC = () => {
     e.preventDefault();
     if (!newMessage.trim() || !selectedRoom) return;
 
-    // In a real app, this would send to backend
-    console.log('Sending message:', newMessage);
+    const newChatMessage: ChatMessage = {
+      id: Date.now().toString(),
+      content: newMessage,
+      sender: user!,
+      timestamp: new Date(),
+      read: true
+    };
+
+    setChatRooms(prevRooms => 
+      prevRooms.map(room => 
+        room.id === selectedRoom 
+          ? { ...room, messages: [...room.messages, newChatMessage] }
+          : room
+      )
+    );
+
     setNewMessage('');
   };
 
