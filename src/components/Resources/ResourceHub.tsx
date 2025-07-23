@@ -31,69 +31,123 @@ const ResourceHub: React.FC = () => {
   const resources: Resource[] = [
     {
       id: '1',
-      title: 'Managing Academic Stress: A Complete Guide',
-      content: 'Learn effective strategies to handle academic pressure and maintain your well-being.',
+      title: 'How to Manage Academic Stress - Harvard Health',
+      content: 'Comprehensive guide from Harvard Medical School on managing academic pressure, time management, and maintaining mental wellness during studies.',
       category: 'stress',
       type: 'article',
-      author: 'Dr. Sarah Johnson',
-      createdAt: new Date('2024-07-15'),
+      author: 'Harvard Health Publishing',
+      createdAt: new Date('2024-12-15'),
       views: 1847,
-      thumbnail: 'https://images.pexels.com/photos/3760069/pexels-photo-3760069.jpeg?auto=compress&cs=tinysrgb&w=400'
+      thumbnail: 'https://images.pexels.com/photos/3760069/pexels-photo-3760069.jpeg?auto=compress&cs=tinysrgb&w=400',
+      url: 'https://www.health.harvard.edu/blog/why-stress-happens-and-how-to-manage-it-2018071314386'
     },
     {
       id: '2',
-      title: 'Breathing Exercises for Anxiety Relief',
-      content: 'Simple breathing techniques you can use anywhere to reduce anxiety and panic.',
+      title: '5-Minute Breathing Exercise for Anxiety - Headspace',
+      content: 'Guided breathing meditation specifically designed to reduce anxiety and promote calm. Perfect for students during stressful periods.',
       category: 'anxiety',
       type: 'video',
-      author: 'Mind Mate Team',
-      createdAt: new Date('2024-07-12'),
+      author: 'Headspace',
+      createdAt: new Date('2024-12-12'),
       views: 892,
-      thumbnail: 'https://images.pexels.com/photos/3094215/pexels-photo-3094215.jpeg?auto=compress&cs=tinysrgb&w=400'
+      thumbnail: 'https://images.pexels.com/photos/3094215/pexels-photo-3094215.jpeg?auto=compress&cs=tinysrgb&w=400',
+      url: 'https://www.youtube.com/watch?v=YRPh_GaiL8s'
     },
     {
       id: '3',
-      title: 'Building Daily Motivation Habits',
-      content: 'Create sustainable motivation practices that will keep you going through tough times.',
+      title: 'Student Mental Health: Building Resilience - TED Talk',
+      content: 'Inspiring TED talk about building mental resilience as a student, featuring practical strategies for maintaining motivation and overcoming challenges.',
       category: 'motivation',
-      type: 'guide',
-      author: 'Prof. Michael Chen',
-      createdAt: new Date('2024-07-10'),
+      type: 'video',
+      author: 'TED Talks',
+      createdAt: new Date('2024-12-10'),
       views: 634,
-      thumbnail: 'https://images.pexels.com/photos/3760263/pexels-photo-3760263.jpeg?auto=compress&cs=tinysrgb&w=400'
+      thumbnail: 'https://images.pexels.com/photos/3760263/pexels-photo-3760263.jpeg?auto=compress&cs=tinysrgb&w=400',
+      url: 'https://www.youtube.com/watch?v=RcGyVTAoXEU'
     },
     {
       id: '4',
-      title: 'Self-Care Checklist for Students',
-      content: 'A comprehensive checklist to ensure you are taking care of yourself while studying.',
+      title: 'Self-Care for Students - Mayo Clinic Guide',
+      content: 'Evidence-based self-care strategies specifically designed for students. Includes physical, mental, and emotional wellness tips.',
       category: 'self-care',
-      type: 'guide',
-      author: 'Lisa Rodriguez',
-      createdAt: new Date('2024-07-08'),
+      type: 'article',
+      author: 'Mayo Clinic',
+      createdAt: new Date('2024-12-08'),
       views: 1203,
-      thumbnail: 'https://images.pexels.com/photos/3768911/pexels-photo-3768911.jpeg?auto=compress&cs=tinysrgb&w=400'
+      thumbnail: 'https://images.pexels.com/photos/3768911/pexels-photo-3768911.jpeg?auto=compress&cs=tinysrgb&w=400',
+      url: 'https://www.mayoclinic.org/healthy-lifestyle/adult-health/in-depth/self-care/art-20056837'
     },
     {
       id: '5',
-      title: 'Understanding Exam Anxiety',
-      content: 'Learn why exam anxiety happens and proven strategies to overcome it.',
+      title: 'Overcoming Test Anxiety - American Psychological Association',
+      content: 'Professional insights from APA on understanding and managing test anxiety, with proven cognitive and behavioral strategies.',
       category: 'anxiety',
       type: 'article',
-      author: 'Dr. Emily Watson',
-      createdAt: new Date('2024-07-05'),
+      author: 'American Psychological Association',
+      createdAt: new Date('2024-12-05'),
       views: 756,
-      thumbnail: 'https://images.pexels.com/photos/3760067/pexels-photo-3760067.jpeg?auto=compress&cs=tinysrgb&w=400'
+      thumbnail: 'https://images.pexels.com/photos/3760067/pexels-photo-3760067.jpeg?auto=compress&cs=tinysrgb&w=400',
+      url: 'https://www.apa.org/topics/anxiety/test-anxiety'
     },
     {
       id: '6',
-      title: 'Time Management for Better Mental Health',
-      content: 'How proper time management can reduce stress and improve your overall well-being.',
+      title: 'Study Tips for Better Mental Health - Khan Academy',
+      content: 'Practical study strategies that promote both academic success and mental wellness, including time management and stress reduction techniques.',
       category: 'academic',
       type: 'video',
-      author: 'Dr. James Park',
-      createdAt: new Date('2024-07-03'),
+      author: 'Khan Academy',
+      createdAt: new Date('2024-12-03'),
       views: 445,
-      thumbnail: 'https://images.pexels.com/photos/3760265/pexels-photo-3760265.jpeg?auto=compress&cs=tinysrgb&w=400'
+      thumbnail: 'https://images.pexels.com/photos/3760265/pexels-photo-3760265.jpeg?auto=compress&cs=tinysrgb&w=400',
+      url: 'https://www.youtube.com/watch?v=IlU-zDU6aQ0'
+    },
+    {
+      id: '7',
+      title: 'Mindfulness Meditation for Students - Calm App',
+      content: '10-minute guided mindfulness meditation designed specifically for students to reduce stress and improve focus.',
+      category: 'stress',
+      type: 'video',
+      author: 'Calm',
+      createdAt: new Date('2024-12-01'),
+      views: 1156,
+      thumbnail: 'https://images.pexels.com/photos/3822622/pexels-photo-3822622.jpeg?auto=compress&cs=tinysrgb&w=400',
+      url: 'https://www.youtube.com/watch?v=ZToicYcHIOU'
+    },
+    {
+      id: '8',
+      title: 'Depression in College Students - National Institute of Mental Health',
+      content: 'Comprehensive resource about recognizing, understanding, and seeking help for depression during college years.',
+      category: 'anxiety',
+      type: 'article',
+      author: 'NIMH',
+      createdAt: new Date('2024-11-28'),
+      views: 923,
+      thumbnail: 'https://images.pexels.com/photos/3771115/pexels-photo-3771115.jpeg?auto=compress&cs=tinysrgb&w=400',
+      url: 'https://www.nimh.nih.gov/health/topics/depression'
+    },
+    {
+      id: '9',
+      title: 'Building Healthy Sleep Habits - Sleep Foundation',
+      content: 'Essential guide for students on developing healthy sleep patterns to support mental health and academic performance.',
+      category: 'self-care',
+      type: 'guide',
+      author: 'Sleep Foundation',
+      createdAt: new Date('2024-11-25'),
+      views: 678,
+      thumbnail: 'https://images.pexels.com/photos/3771069/pexels-photo-3771069.jpeg?auto=compress&cs=tinysrgb&w=400',
+      url: 'https://www.sleepfoundation.org/how-sleep-works/why-do-we-need-sleep'
+    },
+    {
+      id: '10',
+      title: 'Motivation and Goal Setting - Crash Course Psychology',
+      content: 'Educational video explaining the psychology behind motivation and practical goal-setting strategies for academic success.',
+      category: 'motivation',
+      type: 'video',
+      author: 'Crash Course',
+      createdAt: new Date('2024-11-22'),
+      views: 1445,
+      thumbnail: 'https://images.pexels.com/photos/3760263/pexels-photo-3760263.jpeg?auto=compress&cs=tinysrgb&w=400',
+      url: 'https://www.youtube.com/watch?v=lsSC2vx7zFQ'
     }
   ];
 
@@ -214,7 +268,7 @@ const ResourceHub: React.FC = () => {
                     {resource.views} views
                   </div>
                   <button 
-                    onClick={() => window.open(resource.thumbnail, '_blank')}
+                    onClick={() => window.open(resource.url, '_blank')}
                     className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm"
                   >
                     View Resource

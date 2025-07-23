@@ -18,6 +18,7 @@ export interface Resource {
   createdAt: Date;
   views: number;
   thumbnail?: string;
+  url: string;
 }
 
 export interface Post {
