@@ -32,13 +32,13 @@ const MoodTracker: React.FC = () => {
     
     // Default data for new users
     return [
-      { id: '1', date: new Date('2024-01-15'), mood: 7, notes: 'Good day at university', activities: ['study', 'exercise'] },
-      { id: '2', date: new Date('2024-01-14'), mood: 4, notes: 'Stressed about upcoming exam', activities: ['study'] },
-      { id: '3', date: new Date('2024-01-13'), mood: 8, notes: 'Great weekend with friends', activities: ['social', 'relaxation'] },
-      { id: '4', date: new Date('2024-01-12'), mood: 6, notes: 'Regular day', activities: ['study', 'sleep'] },
-      { id: '5', date: new Date('2024-01-11'), mood: 3, notes: 'Feeling overwhelmed', activities: ['study'] },
-      { id: '6', date: new Date('2024-01-10'), mood: 9, notes: 'Excellent therapy session', activities: ['therapy', 'meditation'] },
-      { id: '7', date: new Date('2024-01-09'), mood: 5, notes: 'Neutral mood', activities: ['study', 'sleep'] }
+      { id: '1', date: new Date('2024-07-15'), mood: 7, notes: 'Good day at university', activities: ['study', 'exercise'] },
+      { id: '2', date: new Date('2024-07-14'), mood: 4, notes: 'Stressed about upcoming exam', activities: ['study'] },
+      { id: '3', date: new Date('2024-07-13'), mood: 8, notes: 'Great weekend with friends', activities: ['social', 'relaxation'] },
+      { id: '4', date: new Date('2024-07-12'), mood: 6, notes: 'Regular day', activities: ['study', 'sleep'] },
+      { id: '5', date: new Date('2024-07-11'), mood: 3, notes: 'Feeling overwhelmed', activities: ['study'] },
+      { id: '6', date: new Date('2024-07-10'), mood: 9, notes: 'Excellent therapy session', activities: ['therapy', 'meditation'] },
+      { id: '7', date: new Date('2024-07-09'), mood: 5, notes: 'Neutral mood', activities: ['study', 'sleep'] }
     ];
   };
 
