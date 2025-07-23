@@ -17,16 +17,38 @@ const MoodTracker: React.FC = () => {
   const [currentMood, setCurrentMood] = useState(5);
   const [moodNotes, setMoodNotes] = useState('');
   const [selectedActivities, setSelectedActivities] = useState<string[]>([]);
+  const [saveMessage, setSaveMessage] = useState('');
 
-  const moodData: MoodEntry[] = [
-    { id: '1', date: new Date('2024-01-15'), mood: 7, notes: 'Good day at university', activities: ['study', 'exercise'] },
-    { id: '2', date: new Date('2024-01-14'), mood: 4, notes: 'Stressed about upcoming exam', activities: ['study'] },
-    { id: '3', date: new Date('2024-01-13'), mood: 8, notes: 'Great weekend with friends', activities: ['social', 'relaxation'] },
-    { id: '4', date: new Date('2024-01-12'), mood: 6, notes: 'Regular day', activities: ['study', 'sleep'] },
-    { id: '5', date: new Date('2024-01-11'), mood: 3, notes: 'Feeling overwhelmed', activities: ['study'] },
-    { id: '6', date: new Date('2024-01-10'), mood: 9, notes: 'Excellent therapy session', activities: ['therapy', 'meditation'] },
-    { id: '7', date: new Date('2024-01-09'), mood: 5, notes: 'Neutral mood', activities: ['study', 'sleep'] }
-  ];
+  // Load mood data from localStorage or use default data
+  const loadMoodData = (): MoodEntry[] => {
+    const stored = localStorage.getItem(`mindmate_mood_${user?.id}`);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      return parsed.map((entry: any) => ({
+        ...entry,
+        date: new Date(entry.date)
+      }));
+    }
+    
+    // Default data for new users
+    return [
+      { id: '1', date: new Date('2024-01-15'), mood: 7, notes: 'Good day at university', activities: ['study', 'exercise'] },
+      { id: '2', date: new Date('2024-01-14'), mood: 4, notes: 'Stressed about upcoming exam', activities: ['study'] },
+      { id: '3', date: new Date('2024-01-13'), mood: 8, notes: 'Great weekend with friends', activities: ['social', 'relaxation'] },
+      { id: '4', date: new Date('2024-01-12'), mood: 6, notes: 'Regular day', activities: ['study', 'sleep'] },
+      { id: '5', date: new Date('2024-01-11'), mood: 3, notes: 'Feeling overwhelmed', activities: ['study'] },
+      { id: '6', date: new Date('2024-01-10'), mood: 9, notes: 'Excellent therapy session', activities: ['therapy', 'meditation'] },
+      { id: '7', date: new Date('2024-01-09'), mood: 5, notes: 'Neutral mood', activities: ['study', 'sleep'] }
+    ];
+  };
+
+  const [moodData, setMoodData] = useState<MoodEntry[]>(loadMoodData);
+
+  // Save mood data to localStorage
+  const saveMoodData = (data: MoodEntry[]) => {
+    localStorage.setItem(`mindmate_mood_${user?.id}`, JSON.stringify(data));
+    setMoodData(data);
+  };
 
   const activities = [
     'study', 'exercise', 'social', 'relaxation', 'therapy', 'meditation', 
@@ -58,19 +80,44 @@ const MoodTracker: React.FC = () => {
   const moodTrend = moodData.length >= 2 ? moodData[0].mood - moodData[1].mood : 0;
 
   const handleSaveMood = () => {
+    // Check if there's already an entry for today
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const existingEntryIndex = moodData.findIndex(entry => {
+      const entryDate = new Date(entry.date);
+      entryDate.setHours(0, 0, 0, 0);
+      return entryDate.getTime() === today.getTime();
+    });
+
     const newEntry: MoodEntry = {
       id: Date.now().toString(),
-      date: selectedDate,
+      date: new Date(),
       mood: currentMood,
       notes: moodNotes,
       activities: selectedActivities
     };
     
-    // In a real app, this would save to backend
-    console.log('Saving mood entry:', newEntry);
+    let updatedMoodData;
+    if (existingEntryIndex >= 0) {
+      // Update existing entry
+      updatedMoodData = [...moodData];
+      updatedMoodData[existingEntryIndex] = { ...newEntry, id: moodData[existingEntryIndex].id };
+      setSaveMessage('Today\'s mood updated successfully! 🎉');
+    } else {
+      // Add new entry at the beginning
+      updatedMoodData = [newEntry, ...moodData];
+      setSaveMessage('Mood saved successfully! 🎉');
+    }
     
+    saveMoodData(updatedMoodData);
+    
+    // Reset form
     setMoodNotes('');
     setSelectedActivities([]);
+    
+    // Clear success message after 3 seconds
+    setTimeout(() => setSaveMessage(''), 3000);
   };
 
   const toggleActivity = (activity: string) => {
@@ -81,6 +128,14 @@ const MoodTracker: React.FC = () => {
     );
   };
 
+  // Check if there's already an entry for today
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayEntry = moodData.find(entry => {
+    const entryDate = new Date(entry.date);
+    entryDate.setHours(0, 0, 0, 0);
+    return entryDate.getTime() === today.getTime();
+  });
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="text-center mb-8">
@@ -96,8 +151,23 @@ const MoodTracker: React.FC = () => {
           <div className="bg-white rounded-lg shadow-md p-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
               <Calendar className="h-5 w-5 mr-2" />
-              Today's Mood
+              {todayEntry ? 'Update Today\'s Mood' : 'Today\'s Mood'}
             </h2>
+            
+            {todayEntry && (
+              <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm text-blue-800">
+                  You already logged your mood today ({todayEntry.mood}/10). 
+                  You can update it below.
+                </p>
+              </div>
+            )}
+            
+            {saveMessage && (
+              <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                <p className="text-sm text-green-800">{saveMessage}</p>
+              </div>
+            )}
             
             <div className="text-center mb-6">
               <div className="text-6xl mb-2">{getMoodEmoji(currentMood)}</div>
@@ -166,7 +236,7 @@ const MoodTracker: React.FC = () => {
               className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center"
             >
               <Plus className="h-4 w-4 mr-2" />
-              Save Today's Mood
+              {todayEntry ? 'Update Today\'s Mood' : 'Save Today\'s Mood'}
             </button>
           </div>
         </div>
