@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mind Mate - Mental Health Support Platform</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div id="app">
+        <!-- Loading Screen -->
+        <div id="loading" class="loading-screen">
+            <div class="spinner"></div>
+            <p>Loading Mind Mate...</p>
+        </div>
+
+        <!-- Login/Register Screen -->
+        <div id="auth-screen" class="auth-screen hidden">
+            <div class="auth-container">
+                <div class="auth-header">
+                    <i class="fas fa-heart"></i>
+                    <h1>Mind Mate</h1>
+                    <p>Your mental health support platform</p>
+                </div>
+
+                <!-- Login Form -->
+                <form id="login-form" class="auth-form">
+                    <h2>Welcome Back</h2>
+                    <div class="form-group">
+                        <input type="email" id="login-email" placeholder="Email" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="password" id="login-password" placeholder="Password" required>
+                    </div>
+                    <button type="submit" class="btn-primary">Sign In</button>
+                    <p class="auth-switch">
+                        Don't have an account? 
+                        <a href="#" id="show-register">Sign up</a>
+                    </p>
+                </form>
+
+                <!-- Register Form -->
+                <form id="register-form" class="auth-form hidden">
+                    <h2>Join Mind Mate</h2>
+                    <div class="form-group">
+                        <input type="text" id="register-name" placeholder="Full Name" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="email" id="register-email" placeholder="Email" required>
+                    </div>
+                    <div class="form-group">
+                        <select id="register-role" required>
+                            <option value="student">Student</option>
+                            <option value="counsellor">Counsellor</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <input type="password" id="register-password" placeholder="Password" required>
+                    </div>
+                    <button type="submit" class="btn-primary">Create Account</button>
+                    <p class="auth-switch">
+                        Already have an account? 
+                        <a href="#" id="show-login">Sign in</a>
+                    </p>
+                </form>
+            </div>
+        </div>
+
+        <!-- Main Application -->
+        <div id="main-app" class="hidden">
+            <!-- Navigation -->
+            <nav class="navbar">
+                <div class="nav-brand">
+                    <i class="fas fa-heart"></i>
+                    <span>Mind Mate</span>
+                </div>
+                <div class="nav-links">
+                    <a href="#" data-view="dashboard" class="nav-link active">
+                        <i class="fas fa-chart-bar"></i> Dashboard
+                    </a>
+                    <a href="#" data-view="resources" class="nav-link">
+                        <i class="fas fa-book"></i> Resources
+                    </a>
+                    <a href="#" data-view="feelings" class="nav-link">
+                        <i class="fas fa-heart"></i> Feelings Wall
+                    </a>
+                    <a href="#" data-view="forum" class="nav-link">
+                        <i class="fas fa-users"></i> Forum
+                    </a>
+                    <a href="#" data-view="chat" class="nav-link">
+                        <i class="fas fa-comments"></i> Chat
+                    </a>
+                    <a href="#" data-view="mood" class="nav-link">
+                        <i class="fas fa-chart-line"></i> Mood Tracker
+                    </a>
+                </div>
+                <div class="nav-user">
+                    <div class="user-info">
+                        <span id="user-name"></span>
+                        <button id="logout-btn" class="btn-secondary">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </button>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Main Content -->
+            <main class="main-content">
+                <!-- Dashboard View -->
+                <div id="dashboard-view" class="view active">
+                    <div class="container">
+                        <div class="welcome-banner">
+                            <h1>Welcome back, <span id="welcome-name"></span>! 👋</h1>
+                            <p>How are you feeling today? Remember, taking care of your mental health is just as important as your studies.</p>
+                        </div>
+
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-icon">
+                                    <i class="fas fa-heart"></i>
+                                </div>
+                                <div class="stat-info">
+                                    <h3 id="posts-count">0</h3>
+                                    <p>Posts This Week</p>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon">
+                                    <i class="fas fa-comments"></i>
+                                </div>
+                                <div class="stat-info">
+                                    <h3 id="chats-count">0</h3>
+                                    <p>Chat Sessions</p>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon">
+                                    <i class="fas fa-book"></i>
+                                </div>
+                                <div class="stat-info">
+                                    <h3 id="resources-count">0</h3>
+                                    <p>Resources Read</p>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon">
+                                    <i class="fas fa-chart-line"></i>
+                                </div>
+                                <div class="stat-info">
+                                    <h3 id="mood-average">0</h3>
+                                    <p>Average Mood</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="dashboard-grid">
+                            <div class="dashboard-card">
+                                <h3><i class="fas fa-bolt"></i> Quick Actions</h3>
+                                <div class="quick-actions">
+                                    <button class="action-btn" data-view="feelings">
+                                        <i class="fas fa-heart"></i> Share Your Feelings
+                                    </button>
+                                    <button class="action-btn" data-view="chat">
+                                        <i class="fas fa-comments"></i> Start a Chat
+                                    </button>
+                                    <button class="action-btn" data-view="resources">
+                                        <i class="fas fa-book"></i> Browse Resources
+                                    </button>
+                                    <button class="action-btn" data-view="forum">
+                                        <i class="fas fa-users"></i> Join Forum
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="dashboard-card">
+                                <h3><i class="fas fa-clock"></i> Recent Activity</h3>
+                                <div id="recent-activity" class="activity-list">
+                                    <!-- Activity items will be loaded here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Resources View -->
+                <div id="resources-view" class="view">
+                    <div class="container">
+                        <div class="page-header">
+                            <h1>Resource Hub</h1>
+                            <p>Curated mental health resources to support your well-being journey</p>
+                        </div>
+
+                        <div class="filters">
+                            <div class="search-box">
+                                <i class="fas fa-search"></i>
+                                <input type="text" id="resource-search" placeholder="Search resources...">
+                            </div>
+                            <select id="resource-category">
+                                <option value="all">All Categories</option>
+                                <option value="stress">Stress Management</option>
+                                <option value="anxiety">Anxiety Help</option>
+                                <option value="motivation">Motivation</option>
+                                <option value="self-care">Self Care</option>
+                                <option value="academic">Academic Support</option>
+                            </select>
+                        </div>
+
+                        <div id="resources-grid" class="resources-grid">
+                            <!-- Resources will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Feelings Wall View -->
+                <div id="feelings-view" class="view">
+                    <div class="container">
+                        <div class="page-header">
+                            <h1>Feelings Wall</h1>
+                            <p>Share your thoughts and feelings in a safe, supportive community</p>
+                            <button id="new-post-btn" class="btn-primary">
+                                <i class="fas fa-plus"></i> Share Your Feelings
+                            </button>
+                        </div>
+
+                        <!-- New Post Form -->
+                        <div id="new-post-form" class="post-form hidden">
+                            <h3>How are you feeling?</h3>
+                            <textarea id="post-content" placeholder="Share what's on your mind... Your post can be anonymous." rows="4"></textarea>
+                            
+                            <div class="mood-selector">
+                                <label>How are you feeling right now?</label>
+                                <div class="mood-options">
+                                    <button type="button" class="mood-btn" data-mood="happy">😊 Happy</button>
+                                    <button type="button" class="mood-btn" data-mood="sad">😢 Sad</button>
+                                    <button type="button" class="mood-btn" data-mood="anxious">😰 Anxious</button>
+                                    <button type="button" class="mood-btn" data-mood="stressed">😤 Stressed</button>
+                                    <button type="button" class="mood-btn active" data-mood="neutral">😐 Neutral</button>
+                                    <button type="button" class="mood-btn" data-mood="motivated">💪 Motivated</button>
+                                </div>
+                            </div>
+
+                            <div class="form-actions">
+                                <button id="cancel-post" class="btn-secondary">Cancel</button>
+                                <button id="submit-post" class="btn-primary">
+                                    <i class="fas fa-paper-plane"></i> Share Anonymously
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="posts-feed" class="posts-feed">
+                            <!-- Posts will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Forum View -->
+                <div id="forum-view" class="view">
+                    <div class="container">
+                        <div class="page-header">
+                            <h1>Community Forum</h1>
+                            <p>Connect with peers, share experiences, and support each other</p>
+                            <button id="new-topic-btn" class="btn-primary">
+                                <i class="fas fa-plus"></i> New Topic
+                            </button>
+                        </div>
+
+                        <div class="filters">
+                            <div class="search-box">
+                                <i class="fas fa-search"></i>
+                                <input type="text" id="forum-search" placeholder="Search discussions...">
+                            </div>
+                            <select id="forum-category">
+                                <option value="all">All Categories</option>
+                                <option value="general">General Discussion</option>
+                                <option value="academic">Academic Stress</option>
+                                <option value="anxiety">Anxiety Support</option>
+                                <option value="relationships">Relationships</option>
+                                <option value="motivation">Motivation & Goals</option>
+                                <option value="self-care">Self Care Tips</option>
+                            </select>
+                        </div>
+
+                        <div id="forum-topics" class="forum-topics">
+                            <!-- Topics will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chat View -->
+                <div id="chat-view" class="view">
+                    <div class="container">
+                        <div class="chat-container">
+                            <div class="chat-sidebar">
+                                <div class="chat-header">
+                                    <h3>Conversations</h3>
+                                </div>
+                                <div id="chat-rooms" class="chat-rooms">
+                                    <!-- Chat rooms will be loaded here -->
+                                </div>
+                                <div class="counsellors-section">
+                                    <h4>Available Counsellors</h4>
+                                    <div id="counsellors-list" class="counsellors-list">
+                                        <!-- Counsellors will be loaded here -->
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="chat-main">
+                                <div id="chat-placeholder" class="chat-placeholder">
+                                    <i class="fas fa-comments"></i>
+                                    <h3>Select a conversation</h3>
+                                    <p>Choose a conversation from the sidebar to start chatting</p>
+                                </div>
+                                <div id="chat-area" class="chat-area hidden">
+                                    <div class="chat-header">
+                                        <div class="chat-user-info">
+                                            <div class="user-avatar">
+                                                <i class="fas fa-user"></i>
+                                            </div>
+                                            <div class="user-details">
+                                                <h4 id="chat-user-name"></h4>
+                                                <span id="chat-user-status"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div id="chat-messages" class="chat-messages">
+                                        <!-- Messages will be loaded here -->
+                                    </div>
+                                    <div class="chat-input">
+                                        <input type="text" id="message-input" placeholder="Type your message...">
+                                        <button id="send-message" class="btn-primary">
+                                            <i class="fas fa-paper-plane"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mood Tracker View -->
+                <div id="mood-view" class="view">
+                    <div class="container">
+                        <div class="page-header">
+                            <h1>Mood Tracker</h1>
+                            <p>Track your daily mood and identify patterns to better understand your mental health</p>
+                        </div>
+
+                        <div class="mood-grid">
+                            <div class="mood-entry-card">
+                                <h3><i class="fas fa-calendar"></i> Today's Mood</h3>
+                                <div class="mood-display">
+                                    <div class="mood-emoji" id="current-mood-emoji">😐</div>
+                                    <p id="current-mood-label">Neutral</p>
+                                    <p id="current-mood-rating">Rate: 5/10</p>
+                                </div>
+                                
+                                <div class="mood-slider">
+                                    <label>How are you feeling? (1-10)</label>
+                                    <input type="range" id="mood-range" min="1" max="10" value="5">
+                                    <div class="range-labels">
+                                        <span>1</span>
+                                        <span>5</span>
+                                        <span>10</span>
+                                    </div>
+                                </div>
+
+                                <div class="activities-section">
+                                    <label>What activities did you do today?</label>
+                                    <div class="activities-grid" id="activities-grid">
+                                        <!-- Activity buttons will be generated here -->
+                                    </div>
+                                </div>
+
+                                <div class="notes-section">
+                                    <label>Notes (optional)</label>
+                                    <textarea id="mood-notes" placeholder="How was your day? What influenced your mood?" rows="3"></textarea>
+                                </div>
+
+                                <button id="save-mood" class="btn-primary">
+                                    <i class="fas fa-save"></i> Save Today's Mood
+                                </button>
+                                <div id="mood-save-message" class="save-message hidden"></div>
+                            </div>
+
+                            <div class="mood-analytics">
+                                <div class="stats-row">
+                                    <div class="stat-card">
+                                        <h4>Average Mood</h4>
+                                        <p id="average-mood">0.0/10</p>
+                                    </div>
+                                    <div class="stat-card">
+                                        <h4>Mood Trend</h4>
+                                        <p id="mood-trend">0.0</p>
+                                    </div>
+                                    <div class="stat-card">
+                                        <h4>Entries This Week</h4>
+                                        <p id="entries-count">0</p>
+                                    </div>
+                                </div>
+
+                                <div class="mood-chart">
+                                    <h4>7-Day Mood Trend</h4>
+                                    <canvas id="mood-chart-canvas" width="400" height="200"></canvas>
+                                </div>
+
+                                <div class="recent-entries">
+                                    <h4>Recent Entries</h4>
+                                    <div id="recent-mood-entries" class="entries-list">
+                                        <!-- Recent entries will be loaded here -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
