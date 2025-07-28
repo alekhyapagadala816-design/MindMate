@@ -329,36 +329,91 @@ function loadDefaultResources() {
     const defaultResources = [
         {
             _id: '1',
-            title: 'How to Manage Academic Stress - Harvard Health',
-            content: 'Comprehensive guide from Harvard Medical School on managing academic pressure, time management, and maintaining mental wellness during studies.',
+            title: 'The Complete Guide to Managing Academic Stress and Anxiety',
+            content: 'A comprehensive resource from leading psychologists on how to handle exam pressure, assignment deadlines, and academic perfectionism. Learn evidence-based techniques including the Pomodoro method, mindfulness practices, and cognitive restructuring.',
             category: 'stress',
             type: 'article',
-            author: 'Harvard Health Publishing',
+            author: 'Dr. Sarah Mitchell, Clinical Psychologist',
             createdAt: new Date('2024-12-15'),
-            views: 1847,
-            url: 'https://www.health.harvard.edu/blog/why-stress-happens-and-how-to-manage-it-2018071314386'
+            views: 2847,
+            url: 'https://www.verywellmind.com/academic-stress-4157543'
         },
         {
             _id: '2',
-            title: '5-Minute Breathing Exercise for Anxiety - Headspace',
-            content: 'Guided breathing meditation specifically designed to reduce anxiety and promote calm. Perfect for students during stressful periods.',
+            title: '10-Minute Daily Meditation for Student Mental Health',
+            content: 'A soothing guided meditation designed specifically for students dealing with academic pressure. This session includes breathing techniques, body scan relaxation, and positive affirmations to start your day with clarity and calm.',
             category: 'anxiety',
             type: 'video',
-            author: 'Headspace',
+            author: 'Mindful Campus Initiative',
             createdAt: new Date('2024-12-12'),
-            views: 892,
-            url: 'https://www.youtube.com/watch?v=YRPh_GaiL8s'
+            views: 1892,
+            url: 'https://www.youtube.com/watch?v=inpok4MKVLM'
         },
         {
             _id: '3',
-            title: 'Student Mental Health: Building Resilience - TED Talk',
-            content: 'Inspiring TED talk about building mental resilience as a student, featuring practical strategies for maintaining motivation and overcoming challenges.',
+            title: 'Breaking the Perfectionism Trap: A Student\'s Journey',
+            content: 'An inspiring TED talk by a former perfectionist student who shares her journey of overcoming academic anxiety and imposter syndrome. Learn practical strategies for embracing failure as growth and finding balance in academic life.',
             category: 'motivation',
             type: 'video',
-            author: 'TED Talks',
+            author: 'Jessica Chen, Stanford Graduate',
             createdAt: new Date('2024-12-10'),
-            views: 634,
-            url: 'https://www.youtube.com/watch?v=RcGyVTAoXEU'
+            views: 3634,
+            url: 'https://www.youtube.com/watch?v=f4Uj03de3SY'
+        },
+        {
+            _id: '4',
+            title: 'Sleep Hygiene for Students: Your Ultimate Guide',
+            content: 'Poor sleep affects 70% of college students. This comprehensive guide covers everything from creating the perfect sleep environment to managing late-night study sessions without sacrificing rest quality.',
+            category: 'self-care',
+            type: 'article',
+            author: 'Sleep Foundation Research Team',
+            createdAt: new Date('2024-12-08'),
+            views: 1456,
+            url: 'https://www.sleepfoundation.org/how-sleep-works/sleep-hygiene-tips'
+        },
+        {
+            _id: '5',
+            title: 'Anxiety Relief: Progressive Muscle Relaxation',
+            content: 'A 15-minute guided progressive muscle relaxation session perfect for before exams or when feeling overwhelmed. This technique helps release physical tension and calm racing thoughts.',
+            category: 'anxiety',
+            type: 'video',
+            author: 'Dr. Michael Torres, Therapist',
+            createdAt: new Date('2024-12-07'),
+            views: 987,
+            url: 'https://www.youtube.com/watch?v=1nZEdqcGVzo'
+        },
+        {
+            _id: '6',
+            title: 'Time Management Mastery for Overwhelmed Students',
+            content: 'Transform your chaotic schedule into a well-organized system. Learn the Eisenhower Matrix, time-blocking techniques, and how to say no to commitments that don\'t serve your goals.',
+            category: 'academic',
+            type: 'guide',
+            author: 'Productivity Coach Maria Santos',
+            createdAt: new Date('2024-12-05'),
+            views: 2156,
+            url: 'https://www.mindtools.com/pages/article/newHTE_91.htm'
+        },
+        {
+            _id: '7',
+            title: 'Building Healthy Study Habits That Actually Stick',
+            content: 'Science-backed strategies for creating sustainable study routines. Discover the spacing effect, active recall techniques, and how to make studying more engaging and effective.',
+            category: 'academic',
+            type: 'article',
+            author: 'Learning Sciences Institute',
+            createdAt: new Date('2024-12-03'),
+            views: 1789,
+            url: 'https://www.edutopia.org/article/study-strategies-that-work'
+        },
+        {
+            _id: '8',
+            title: 'Mindful Movement: Yoga for Student Stress Relief',
+            content: 'A gentle 20-minute yoga flow designed for students who spend long hours studying. Perfect for relieving neck tension, improving focus, and boosting energy levels naturally.',
+            category: 'self-care',
+            type: 'video',
+            author: 'Yoga with Adriene',
+            createdAt: new Date('2024-12-01'),
+            views: 2445,
+            url: 'https://www.youtube.com/watch?v=VaoV1PrYft4'
         }
     ];
     
@@ -433,26 +488,74 @@ function loadDefaultPosts() {
     const defaultPosts = [
         {
             _id: '1',
-            content: 'Feeling really overwhelmed with midterm exams coming up. The pressure is getting to me and I can\'t seem to focus. Anyone else feeling this way?',
+            content: 'Finals week is approaching and I\'m having panic attacks every time I think about my organic chemistry exam. I\'ve been studying for weeks but still feel unprepared. The "what if I fail" thoughts won\'t stop. Has anyone found ways to manage this kind of exam anxiety? I really need some support right now. 😰',
             mood: 'stressed',
             anonymous: true,
             createdAt: new Date('2024-12-15T10:30:00'),
             reactions: [
-                { type: 'heart', users: new Array(12) },
-                { type: 'hug', users: new Array(8) },
-                { type: 'support', users: new Array(15) }
+                { type: 'heart', users: new Array(23) },
+                { type: 'hug', users: new Array(18) },
+                { type: 'support', users: new Array(31) }
             ]
         },
         {
             _id: '2',
-            content: 'Had a great conversation with a counsellor today. Feeling so much lighter and more hopeful. Remember, it\'s okay to ask for help! 💙',
+            content: 'Just wanted to share some good news! After months of struggling with depression, I finally reached out to the campus counseling center. My therapist helped me realize that my negative self-talk was making everything worse. We\'ve been working on cognitive behavioral techniques and I\'m starting to see small improvements. To anyone hesitating - please reach out for help. You deserve support! 💙✨',
             mood: 'happy',
             anonymous: false,
             author: { name: 'Sarah M.' },
             createdAt: new Date('2024-12-15T08:15:00'),
             reactions: [
-                { type: 'heart', users: new Array(24) },
-                { type: 'support', users: new Array(18) }
+                { type: 'heart', users: new Array(47) },
+                { type: 'support', users: new Array(35) }
+            ]
+        },
+        {
+            _id: '3',
+            content: 'Does anyone else feel like they\'re constantly behind? I see my classmates posting about internships and achievements on social media, and I feel like I\'m failing at life. I know comparison is the thief of joy, but it\'s so hard not to compare myself to others. How do you deal with imposter syndrome?',
+            mood: 'anxious',
+            anonymous: true,
+            createdAt: new Date('2024-12-14T16:45:00'),
+            reactions: [
+                { type: 'heart', users: new Array(19) },
+                { type: 'hug', users: new Array(25) },
+                { type: 'support', users: new Array(22) }
+            ]
+        },
+        {
+            _id: '4',
+            content: 'Today marks 30 days since I started my morning meditation practice! 🧘‍♀️ It\'s only 10 minutes, but it\'s made such a difference in how I handle stress. My anxiety levels have decreased significantly, and I feel more centered throughout the day. Small consistent actions really do add up. What small habits have helped you?',
+            mood: 'motivated',
+            anonymous: false,
+            author: { name: 'Alex R.' },
+            createdAt: new Date('2024-12-14T09:20:00'),
+            reactions: [
+                { type: 'heart', users: new Array(32) },
+                { type: 'support', users: new Array(28) }
+            ]
+        },
+        {
+            _id: '5',
+            content: 'Having a really tough day. My roommate situation is stressing me out, I bombed my presentation yesterday, and I just feel emotionally drained. Sometimes it feels like everything is falling apart at once. I know this feeling will pass, but right now it\'s overwhelming. Sending love to anyone else having a difficult day. 💔',
+            mood: 'sad',
+            anonymous: true,
+            createdAt: new Date('2024-12-13T14:30:00'),
+            reactions: [
+                { type: 'heart', users: new Array(16) },
+                { type: 'hug', users: new Array(29) },
+                { type: 'support', users: new Array(21) }
+            ]
+        },
+        {
+            _id: '6',
+            content: 'PSA: Your mental health is more important than your GPA! 📢 I used to be a perfectionist who would have breakdowns over B+ grades. This semester I\'ve been focusing on balance - getting enough sleep, exercising, maintaining friendships. My grades are still good, but more importantly, I\'m actually enjoying college now. Remember to be kind to yourself! 🌟',
+            mood: 'happy',
+            anonymous: false,
+            author: { name: 'Jordan K.' },
+            createdAt: new Date('2024-12-13T11:15:00'),
+            reactions: [
+                { type: 'heart', users: new Array(41) },
+                { type: 'support', users: new Array(33) }
             ]
         }
     ];
@@ -552,24 +655,74 @@ function loadDefaultForumTopics() {
     const defaultTopics = [
         {
             _id: '1',
-            title: 'How do you deal with imposter syndrome?',
-            description: 'I constantly feel like I don\'t belong in my program and that everyone is smarter than me. How do you overcome these feelings?',
+            title: 'Imposter Syndrome in STEM Fields - Let\'s Talk About It',
+            description: 'I\'m a computer science major and constantly feel like I don\'t belong. Everyone seems to code effortlessly while I struggle with basic concepts. I got into this program, so I must be capable, but the self-doubt is overwhelming. How do you overcome these feelings? What strategies have worked for you?',
             category: 'academic',
-            author: { name: 'Alex Johnson' },
+            author: { name: 'TechStudent23' },
             createdAt: new Date('2024-12-15T09:30:00'),
-            replies: [1, 2, 3], // Mock reply count
+            replies: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], // Mock reply count
             lastActivity: new Date('2024-12-15T14:20:00'),
             pinned: true
         },
         {
             _id: '2',
-            title: 'Study group for anxiety management techniques',
-            description: 'Looking to form a study group to learn and practice different anxiety management techniques together. Who\'s interested?',
+            title: 'Weekly Anxiety Support Circle - Join Us! 🤝',
+            description: 'Hey everyone! I\'m organizing a weekly virtual meetup for students dealing with anxiety. We\'ll share coping strategies, practice breathing exercises together, and just support each other. No judgment, just understanding. Meetings will be Wednesdays at 7 PM EST. Comment if you\'re interested!',
             category: 'anxiety',
-            author: { name: 'Sarah Chen' },
+            author: { name: 'MindfulMaven' },
             createdAt: new Date('2024-12-14T16:45:00'),
-            replies: [1, 2],
+            replies: [1, 2, 3, 4, 5, 6, 7, 8],
             lastActivity: new Date('2024-12-15T11:30:00')
+        },
+        {
+            _id: '3',
+            title: 'Dealing with Academic Burnout - Recovery Stories Needed',
+            description: 'I think I\'m experiencing burnout. I used to love learning, but now everything feels like a chore. I can barely get out of bed some days, and my grades are suffering. Has anyone successfully recovered from academic burnout? What did your recovery look like? I need hope that this gets better.',
+            category: 'academic',
+            author: { name: 'BurntOutButHopeful' },
+            createdAt: new Date('2024-12-14T13:20:00'),
+            replies: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+            lastActivity: new Date('2024-12-15T10:45:00')
+        },
+        {
+            _id: '4',
+            title: 'Healthy Relationship Boundaries with Family During College',
+            description: 'My parents call me multiple times a day asking about grades, social life, and future plans. While I know they care, it\'s becoming overwhelming and affecting my mental health. How do you set healthy boundaries with well-meaning but overbearing family members? I don\'t want to hurt their feelings but need space to grow.',
+            category: 'relationships',
+            author: { name: 'IndependentLearner' },
+            createdAt: new Date('2024-12-13T19:15:00'),
+            replies: [1, 2, 3, 4, 5, 6, 7, 8, 9],
+            lastActivity: new Date('2024-12-14T22:30:00')
+        },
+        {
+            _id: '5',
+            title: 'Self-Care Sunday Ideas for Busy Students 🌸',
+            description: 'Let\'s share our favorite self-care activities that actually fit into a student budget and schedule! I\'ll start: face masks while studying, 20-minute nature walks between classes, and cooking a nice meal on Sunday evenings. What are your go-to self-care practices?',
+            category: 'self-care',
+            author: { name: 'SelfCareAdvocate' },
+            createdAt: new Date('2024-12-13T15:00:00'),
+            replies: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18],
+            lastActivity: new Date('2024-12-15T08:20:00')
+        },
+        {
+            _id: '6',
+            title: 'Finding Motivation After a Major Setback',
+            description: 'I failed my most important exam this semester and I\'m devastated. This was supposed to be my major, my career path, everything I\'ve worked toward. Now I\'m questioning everything and feeling completely lost. How do you rebuild motivation and confidence after a major academic failure?',
+            category: 'motivation',
+            author: { name: 'StartingOver' },
+            createdAt: new Date('2024-12-12T21:45:00'),
+            replies: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+            lastActivity: new Date('2024-12-14T16:10:00')
+        },
+        {
+            _id: '7',
+            title: 'Social Anxiety in Group Projects - Survival Tips?',
+            description: 'Group projects are my nightmare. I have good ideas but freeze up in meetings, worry about being judged, and often end up doing extra work to avoid confrontation. This is affecting my grades and I know I need to address it. Any tips for managing social anxiety in academic settings?',
+            category: 'anxiety',
+            author: { name: 'QuietContributor' },
+            createdAt: new Date('2024-12-12T14:30:00'),
+            replies: [1, 2, 3, 4, 5, 6, 7],
+            lastActivity: new Date('2024-12-13T20:15:00')
         }
     ];
     
@@ -625,22 +778,111 @@ function loadDefaultChat() {
     const defaultRooms = [
         {
             _id: '1',
-            participants: [{ name: 'Dr. Sarah Johnson', role: 'counsellor', isOnline: true }],
+            participants: [{ name: 'Dr. Emily Rodriguez', role: 'counsellor', isOnline: true }],
             messages: [
                 {
-                    content: 'Hi! How are you feeling today?',
-                    sender: { name: 'Dr. Sarah Johnson' },
+                    content: 'Hi there! I\'m glad you reached out today. How are you feeling right now?',
+                    sender: { name: 'Dr. Emily Rodriguez' },
                     createdAt: new Date('2024-12-15T10:30:00')
+                },
+                {
+                    content: 'Thank you for asking. I\'ve been feeling quite overwhelmed with finals approaching. The anxiety is really getting to me.',
+                    sender: { name: currentUser?.name || 'You' },
+                    createdAt: new Date('2024-12-15T10:32:00')
+                },
+                {
+                    content: 'That\'s completely understandable. Finals can be incredibly stressful. Can you tell me more about what specifically is making you feel most anxious?',
+                    sender: { name: 'Dr. Emily Rodriguez' },
+                    createdAt: new Date('2024-12-15T10:33:00')
+                },
+                {
+                    content: 'I think it\'s the fear of not being prepared enough, even though I\'ve been studying consistently. I keep having "what if" thoughts about failing.',
+                    sender: { name: currentUser?.name || 'You' },
+                    createdAt: new Date('2024-12-15T10:35:00')
+                },
+                {
+                    content: 'Those "what if" thoughts are very common with anxiety. Let\'s work on some grounding techniques. Have you tried the 5-4-3-2-1 method when you feel overwhelmed?',
+                    sender: { name: 'Dr. Emily Rodriguez' },
+                    createdAt: new Date('2024-12-15T10:37:00')
                 }
             ],
             type: 'counsellor'
+        },
+        {
+            _id: '2',
+            participants: [{ name: 'Maya Chen', role: 'student', isOnline: false }],
+            messages: [
+                {
+                    content: 'Hey! How did your presentation go today?',
+                    sender: { name: 'Maya Chen' },
+                    createdAt: new Date('2024-12-14T15:20:00')
+                },
+                {
+                    content: 'It went better than expected! Thanks for helping me practice yesterday. Your feedback really helped me feel more confident.',
+                    sender: { name: currentUser?.name || 'You' },
+                    createdAt: new Date('2024-12-14T15:45:00')
+                },
+                {
+                    content: 'That\'s amazing! I\'m so proud of you for pushing through the anxiety. Want to celebrate with coffee later?',
+                    sender: { name: 'Maya Chen' },
+                    createdAt: new Date('2024-12-14T16:00:00')
+                }
+            ],
+            type: 'peer'
+        },
+        {
+            _id: '3',
+            participants: [{ name: 'Dr. James Wilson', role: 'counsellor', isOnline: false }],
+            messages: [
+                {
+                    content: 'Good morning! I wanted to follow up on our session yesterday. How are you feeling about the coping strategies we discussed?',
+                    sender: { name: 'Dr. James Wilson' },
+                    createdAt: new Date('2024-12-13T09:00:00')
+                },
+                {
+                    content: 'Morning Dr. Wilson! I tried the breathing exercise when I felt anxious last night and it actually helped. Thank you for teaching me that.',
+                    sender: { name: currentUser?.name || 'You' },
+                    createdAt: new Date('2024-12-13T09:15:00')
+                },
+                {
+                    content: 'That\'s wonderful to hear! Remember, these techniques get more effective with practice. Keep using them whenever you feel overwhelmed.',
+                    sender: { name: 'Dr. James Wilson' },
+                    createdAt: new Date('2024-12-13T09:20:00')
+                }
+            ],
+            type: 'counsellor'
+        },
+        {
+            _id: '4',
+            participants: [{ name: 'Alex Thompson', role: 'student', isOnline: true }],
+            messages: [
+                {
+                    content: 'Are you going to the study group tonight?',
+                    sender: { name: 'Alex Thompson' },
+                    createdAt: new Date('2024-12-15T12:00:00')
+                },
+                {
+                    content: 'Yes! I really need help with organic chemistry. Are you bringing your notes?',
+                    sender: { name: currentUser?.name || 'You' },
+                    createdAt: new Date('2024-12-15T12:05:00')
+                },
+                {
+                    content: 'Absolutely! I also found some great practice problems we can work through together.',
+                    sender: { name: 'Alex Thompson' },
+                    createdAt: new Date('2024-12-15T12:07:00')
+                }
+            ],
+            type: 'peer'
         }
     ];
     
     const defaultCounsellors = [
-        { _id: 'c1', name: 'Dr. Emily Rodriguez', isOnline: true },
-        { _id: 'c2', name: 'Dr. James Wilson', isOnline: false },
-        { _id: 'c3', name: 'Dr. Lisa Thompson', isOnline: true }
+        { _id: 'c1', name: 'Dr. Emily Rodriguez', isOnline: true, specialty: 'Anxiety & Stress Management' },
+        { _id: 'c2', name: 'Dr. James Wilson', isOnline: false, specialty: 'Depression & Mood Disorders' },
+        { _id: 'c3', name: 'Dr. Lisa Thompson', isOnline: true, specialty: 'Academic Performance & Motivation' },
+        { _id: 'c4', name: 'Dr. Michael Chen', isOnline: true, specialty: 'Social Anxiety & Relationships' },
+        { _id: 'c5', name: 'Dr. Sarah Martinez', isOnline: false, specialty: 'Trauma & PTSD' },
+        { _id: 'c6', name: 'Dr. David Kim', isOnline: true, specialty: 'ADHD & Learning Differences' }
     ];
     
     renderChatRooms(defaultRooms);
@@ -676,10 +918,14 @@ function renderCounsellors(counsellors) {
         <div class="counsellor-item" onclick="startChatWithCounsellor('${counsellor._id}', '${counsellor.name}')">
             <div class="counsellor-avatar">
                 ${counsellor.name.split(' ')[1]?.charAt(0) || counsellor.name.charAt(0)}
+                ${counsellor.isOnline ? '<div class="online-indicator"></div>' : ''}
             </div>
             <div class="counsellor-info">
                 <h5>${counsellor.name}</h5>
-                <p>${counsellor.isOnline ? 'Available now' : 'Offline'}</p>
+                <p class="counsellor-status ${counsellor.isOnline ? 'online' : 'offline'}">
+                    ${counsellor.isOnline ? '🟢 Available now' : '🔴 Offline'}
+                </p>
+                ${counsellor.specialty ? `<p class="counsellor-specialty">${counsellor.specialty}</p>` : ''}
             </div>
         </div>
     `).join('');
@@ -704,16 +950,34 @@ function loadChatMessages(roomId) {
     // Mock messages
     const messages = [
         {
-            content: 'Hi! How are you feeling today?',
-            sender: { name: 'Dr. Sarah Johnson' },
+            content: 'Hi there! I\'m glad you reached out today. How are you feeling right now?',
+            sender: { name: 'Dr. Emily Rodriguez' },
             createdAt: new Date('2024-12-15T10:30:00'),
             isOwn: false
         },
         {
-            content: 'Thank you for reaching out. I\'ve been feeling quite overwhelmed with my coursework lately.',
+            content: 'Thank you for asking. I\'ve been feeling quite overwhelmed with finals approaching. The anxiety is really getting to me.',
             sender: { name: currentUser?.name },
             createdAt: new Date('2024-12-15T10:32:00'),
             isOwn: true
+        },
+        {
+            content: 'That\'s completely understandable. Finals can be incredibly stressful. Can you tell me more about what specifically is making you feel most anxious?',
+            sender: { name: 'Dr. Emily Rodriguez' },
+            createdAt: new Date('2024-12-15T10:33:00'),
+            isOwn: false
+        },
+        {
+            content: 'I think it\'s the fear of not being prepared enough, even though I\'ve been studying consistently. I keep having "what if" thoughts about failing.',
+            sender: { name: currentUser?.name },
+            createdAt: new Date('2024-12-15T10:35:00'),
+            isOwn: true
+        },
+        {
+            content: 'Those "what if" thoughts are very common with anxiety. Let\'s work on some grounding techniques. Have you tried the 5-4-3-2-1 method when you feel overwhelmed?',
+            sender: { name: 'Dr. Emily Rodriguez' },
+            createdAt: new Date('2024-12-15T10:37:00'),
+            isOwn: false
         }
     ];
     
