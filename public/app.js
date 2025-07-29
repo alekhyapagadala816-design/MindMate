@@ -165,12 +165,16 @@ const api = {
             method: 'POST',
             body: { title, description, category }
         });
+        
+        document.getElementById('new-topic-btn').addEventListener('click', () => {
+            showNewTopicForm();
+        });
     }
 };
 
 // Authentication
 async function handleLogin(e) {
-    e.preventDefault();
+            <div class="topic-card" onclick="openTopicView('${topic.id}')">
     
     const email = $('#login-email').value;
     const password = $('#login-password').value;
@@ -655,8 +659,14 @@ function loadDefaultForumTopics() {
     const defaultTopics = [
         {
             _id: '1',
+            id: '1',
             title: 'Imposter Syndrome in STEM Fields - Let\'s Talk About It',
             description: 'I\'m a computer science major and constantly feel like I don\'t belong. Everyone seems to code effortlessly while I struggle with basic concepts. I got into this program, so I must be capable, but the self-doubt is overwhelming. How do you overcome these feelings? What strategies have worked for you?',
+            fullContent: `
+                <p>I've been in my CS program for two years now, and the feeling hasn't gone away. In fact, it seems to get worse as the coursework becomes more challenging. I see my classmates discussing complex algorithms like they're talking about the weather, while I'm still trying to wrap my head around basic data structures.</p>
+                <p>The worst part is during group projects. I feel like I'm always the one slowing everyone down, asking questions that seem obvious to others. I've started avoiding study groups because I'm embarrassed about how much I don't know.</p>
+                <p>Has anyone else experienced this? How did you push through? I'm starting to question whether I chose the right major, even though programming is something I genuinely enjoy when I'm not comparing myself to others.</p>
+            `,
             category: 'academic',
             author: { name: 'TechStudent23' },
             createdAt: new Date('2024-12-15T09:30:00'),
@@ -666,6 +676,7 @@ function loadDefaultForumTopics() {
         },
         {
             _id: '2',
+            id: '2',
             title: 'Weekly Anxiety Support Circle - Join Us! 🤝',
             description: 'Hey everyone! I\'m organizing a weekly virtual meetup for students dealing with anxiety. We\'ll share coping strategies, practice breathing exercises together, and just support each other. No judgment, just understanding. Meetings will be Wednesdays at 7 PM EST. Comment if you\'re interested!',
             category: 'anxiety',
@@ -674,6 +685,7 @@ function loadDefaultForumTopics() {
             replies: [1, 2, 3, 4, 5, 6, 7, 8],
             lastActivity: new Date('2024-12-15T11:30:00')
         },
+            id: '3',
         {
             _id: '3',
             title: 'Dealing with Academic Burnout - Recovery Stories Needed',
@@ -892,12 +904,19 @@ function loadDefaultChat() {
 function renderChatRooms(rooms) {
     const container = $('#chat-rooms');
     
+        
+        document.getElementById('send-message').addEventListener('click', sendMessage);
+        document.getElementById('message-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
     container.innerHTML = rooms.map(room => {
         const participant = room.participants.find(p => p._id !== currentUser?.id) || room.participants[0];
         const lastMessage = room.messages[room.messages.length - 1];
         
         return `
-            <div class="chat-room" onclick="selectChatRoom('${room._id}', '${participant.name}', ${participant.isOnline})">
+            <div class="chat-room" onclick="openChat('${room.id}')" data-room-id="${room.id}">
                 <div class="chat-room-avatar">
                     ${participant.name.charAt(0)}
                     ${participant.isOnline ? '<div style="position: absolute; bottom: 0; right: 0; width: 12px; height: 12px; background: #16a34a; border: 2px solid white; border-radius: 50%;"></div>' : ''}
