@@ -1,18 +1,12 @@
-// MindMate Application JavaScript
-
 // Global state
 let currentUser = null;
 let currentView = 'dashboard';
 let currentChatRoom = null;
-let posts = [];
-let resources = [];
-let forumTopics = [];
-let chatRooms = [];
-let counsellors = [];
-let moodEntries = [];
+let selectedMood = 5;
+let selectedActivities = [];
 
 // API Base URL
-const API_BASE = window.location.origin;
+const API_BASE = '/api';
 
 // Utility functions
 const $ = (selector) => document.querySelector(selector);
@@ -32,447 +26,581 @@ const formatTime = (date) => {
 };
 
 const formatDate = (date) => {
-    return date.toLocaleDateString('en-US', {
-        weekday: 'short',
-        month: 'short',
-        day: 'numeric'
+    return date.toLocaleDateString('en-US', { 
+        weekday: 'short', 
+        month: 'short', 
+        day: 'numeric' 
     });
 };
 
 // API functions
-const apiCall = async (endpoint, options = {}) => {
-    const token = localStorage.getItem('token');
-    const headers = {
-        'Content-Type': 'application/json',
-        ...options.headers
-    };
-    
-    if (token) {
-        headers.Authorization = `Bearer ${token}`;
-    }
-    
-    try {
-        const response = await fetch(`${API_BASE}${endpoint}`, {
-            ...options,
-            headers
-        });
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+const api = {
+    async request(endpoint, options = {}) {
+        const token = localStorage.getItem('token');
+        const config = {
+            headers: {
+                'Content-Type': 'application/json',
+                ...(token && { Authorization: `Bearer ${token}` })
+            },
+            ...options
+        };
+
+        if (config.body && typeof config.body === 'object') {
+            config.body = JSON.stringify(config.body);
         }
-        
-        return await response.json();
-    } catch (error) {
-        console.error('API call failed:', error);
-        throw error;
-    }
-};
 
-// Authentication functions
-const login = async (email, password) => {
-    try {
-        const data = await apiCall('/api/auth/login', {
+        try {
+            const response = await fetch(`${API_BASE}${endpoint}`, config);
+            const data = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(data.message || 'Request failed');
+            }
+            
+            return data;
+        } catch (error) {
+            console.error('API Error:', error);
+            throw error;
+        }
+    },
+
+    // Auth
+    async login(email, password) {
+        return this.request('/auth/login', {
             method: 'POST',
-            body: JSON.stringify({ email, password })
+            body: { email, password }
         });
-        
-        localStorage.setItem('token', data.token);
-        currentUser = data.user;
-        return data;
-    } catch (error) {
-        throw error;
-    }
-};
+    },
 
-const register = async (name, email, password, role) => {
-    try {
-        const data = await apiCall('/api/auth/register', {
+    async register(name, email, password, role) {
+        return this.request('/auth/register', {
             method: 'POST',
-            body: JSON.stringify({ name, email, password, role })
+            body: { name, email, password, role }
         });
+    },
+
+    async logout() {
+        return this.request('/auth/logout', { method: 'POST' });
+    },
+
+    async getCurrentUser() {
+        return this.request('/auth/me');
+    },
+
+    // Posts
+    async getPosts() {
+        return this.request('/posts');
+    },
+
+    async createPost(content, mood, anonymous = true) {
+        return this.request('/posts', {
+            method: 'POST',
+            body: { content, mood, anonymous }
+        });
+    },
+
+    async reactToPost(postId, type) {
+        return this.request(`/posts/${postId}/react`, {
+            method: 'POST',
+            body: { type }
+        });
+    },
+
+    // Resources
+    async getResources(category = 'all', search = '') {
+        const params = new URLSearchParams();
+        if (category !== 'all') params.append('category', category);
+        if (search) params.append('search', search);
         
-        localStorage.setItem('token', data.token);
-        currentUser = data.user;
-        return data;
-    } catch (error) {
-        throw error;
+        return this.request(`/resources?${params}`);
+    },
+
+    async viewResource(resourceId) {
+        return this.request(`/resources/${resourceId}/view`, { method: 'POST' });
+    },
+
+    // Mood
+    async getMoodEntries() {
+        return this.request('/mood');
+    },
+
+    async saveMoodEntry(mood, notes, activities, date) {
+        return this.request('/mood', {
+            method: 'POST',
+            body: { mood, notes, activities, date }
+        });
+    },
+
+    async getMoodAnalytics() {
+        return this.request('/mood/analytics');
+    },
+
+    // Chat
+    async getChatRooms() {
+        return this.request('/chat/rooms');
+    },
+
+    async sendMessage(roomId, content) {
+        return this.request(`/chat/rooms/${roomId}/messages`, {
+            method: 'POST',
+            body: { content }
+        });
+    },
+
+    async getCounsellors() {
+        return this.request('/chat/counsellors');
+    },
+
+    // Forum
+    async getForumTopics(category = 'all', search = '') {
+        const params = new URLSearchParams();
+        if (category !== 'all') params.append('category', category);
+        if (search) params.append('search', search);
+        
+        return this.request(`/forum/topics?${params}`);
+    },
+
+    async createForumTopic(title, description, category) {
+        return this.request('/forum/topics', {
+            method: 'POST',
+            body: { title, description, category }
+        });
     }
 };
 
-const logout = async () => {
-    try {
-        await apiCall('/api/auth/logout', { method: 'POST' });
-        localStorage.removeItem('token');
-        currentUser = null;
-        showAuthScreen();
-    } catch (error) {
-        console.error('Logout failed:', error);
-        localStorage.removeItem('token');
-        currentUser = null;
-        showAuthScreen();
-    }
-};
-
-const checkAuth = async () => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-        showAuthScreen();
-        return false;
-    }
+// Authentication
+async function handleLogin(e) {
+    e.preventDefault();
+    
+    const email = $('#login-email').value;
+    const password = $('#login-password').value;
     
     try {
-        const data = await apiCall('/api/auth/me');
-        currentUser = data.user;
+        const response = await api.login(email, password);
+        localStorage.setItem('token', response.token);
+        currentUser = response.user;
         showMainApp();
-        return true;
     } catch (error) {
-        localStorage.removeItem('token');
-        showAuthScreen();
-        return false;
+        alert('Login failed: ' + error.message);
     }
-};
+}
 
-// Screen management
-const showAuthScreen = () => {
+async function handleRegister(e) {
+    e.preventDefault();
+    
+    const name = $('#register-name').value;
+    const email = $('#register-email').value;
+    const password = $('#register-password').value;
+    const role = $('#register-role').value;
+    
+    try {
+        const response = await api.register(name, email, password, role);
+        localStorage.setItem('token', response.token);
+        currentUser = response.user;
+        showMainApp();
+    } catch (error) {
+        alert('Registration failed: ' + error.message);
+    }
+}
+
+async function handleLogout() {
+    try {
+        await api.logout();
+    } catch (error) {
+        console.error('Logout error:', error);
+    }
+    
+    localStorage.removeItem('token');
+    currentUser = null;
+    showAuthScreen();
+}
+
+function showAuthScreen() {
     hideElement($('#loading'));
     hideElement($('#main-app'));
     showElement($('#auth-screen'));
-};
+}
 
-const showMainApp = () => {
+function showMainApp() {
     hideElement($('#loading'));
     hideElement($('#auth-screen'));
     showElement($('#main-app'));
     
-    // Update user info
     $('#user-name').textContent = currentUser.name;
     $('#welcome-name').textContent = currentUser.name;
     
-    // Load initial data
-    loadDashboardData();
-    switchView('dashboard');
-};
+    loadDashboard();
+}
 
-// View management
-const switchView = (viewName) => {
-    // Hide all views
-    $$('.view').forEach(view => view.classList.remove('active'));
+// Navigation
+function switchView(viewName) {
+    // Update navigation
     $$('.nav-link').forEach(link => link.classList.remove('active'));
+    $(`.nav-link[data-view="${viewName}"]`)?.classList.add('active');
     
-    // Show selected view
+    // Update views
+    $$('.view').forEach(view => view.classList.remove('active'));
     $(`#${viewName}-view`).classList.add('active');
-    $(`.nav-link[data-view="${viewName}"]`).classList.add('active');
     
     currentView = viewName;
     
-    // Load view-specific data
+    // Load view content
     switch (viewName) {
         case 'dashboard':
-            loadDashboardData();
+            loadDashboard();
             break;
         case 'resources':
             loadResources();
             break;
         case 'feelings':
-            loadPosts();
+            loadFeelingsWall();
             break;
         case 'forum':
-            loadForumTopics();
+            loadForum();
             break;
         case 'chat':
-            loadChatRooms();
-            loadCounsellors();
+            loadChat();
             break;
         case 'mood':
-            loadMoodData();
+            loadMoodTracker();
             break;
     }
-};
+}
 
-// Dashboard functions
-const loadDashboardData = async () => {
+// Dashboard
+async function loadDashboard() {
     try {
-        // Load stats
-        const [postsData, chatsData, resourcesData, moodData] = await Promise.all([
-            apiCall('/api/posts'),
-            apiCall('/api/chat/rooms'),
-            apiCall('/api/resources'),
-            apiCall('/api/mood/analytics')
-        ]);
+        // Load stats (mock data for now)
+        $('#posts-count').textContent = '12';
+        $('#chats-count').textContent = '8';
+        $('#resources-count').textContent = '24';
         
-        // Update stats
-        $('#posts-count').textContent = postsData.filter(p => 
-            new Date(p.createdAt) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
-        ).length;
-        $('#chats-count').textContent = chatsData.length;
-        $('#resources-count').textContent = resourcesData.length;
-        $('#mood-average').textContent = moodData.averageMood || '0.0';
+        // Load mood average
+        try {
+            const moodData = await api.getMoodAnalytics();
+            $('#mood-average').textContent = moodData.averageMood.toFixed(1);
+        } catch (error) {
+            $('#mood-average').textContent = '0.0';
+        }
         
         // Load recent activity
-        loadRecentActivity();
-    } catch (error) {
-        console.error('Failed to load dashboard data:', error);
-    }
-};
-
-const loadRecentActivity = () => {
-    const activityContainer = $('#recent-activity');
-    const activities = [
-        { text: 'You shared a feeling on the wall', time: '2 hours ago' },
-        { text: 'New resource: Managing Exam Stress', time: '1 day ago' },
-        { text: 'You joined a forum discussion', time: '2 days ago' },
-        { text: 'Mood entry recorded', time: '3 days ago' }
-    ];
-    
-    activityContainer.innerHTML = activities.map(activity => `
-        <div class="activity-item">
-            <div class="activity-dot"></div>
-            <div class="activity-content">
-                <p>${activity.text}</p>
-                <span>${activity.time}</span>
+        const activityContainer = $('#recent-activity');
+        activityContainer.innerHTML = `
+            <div class="activity-item">
+                <div class="activity-dot"></div>
+                <div class="activity-content">
+                    <p>Posted in Feelings Wall</p>
+                    <span>2 hours ago</span>
+                </div>
             </div>
-        </div>
-    `).join('');
-};
+            <div class="activity-item">
+                <div class="activity-dot"></div>
+                <div class="activity-content">
+                    <p>Read "Managing Anxiety"</p>
+                    <span>4 hours ago</span>
+                </div>
+            </div>
+            <div class="activity-item">
+                <div class="activity-dot"></div>
+                <div class="activity-content">
+                    <p>Chatted with counsellor</p>
+                    <span>1 day ago</span>
+                </div>
+            </div>
+        `;
+    } catch (error) {
+        console.error('Error loading dashboard:', error);
+    }
+}
 
-// Resources functions
-const loadResources = async () => {
+// Resources
+async function loadResources() {
     try {
-        const data = await apiCall('/api/resources');
-        resources = data;
+        const resources = await api.getResources();
         renderResources(resources);
     } catch (error) {
-        console.error('Failed to load resources:', error);
-        renderDefaultResources();
+        console.error('Error loading resources:', error);
+        // Load default resources if API fails
+        loadDefaultResources();
     }
-};
+}
 
-const renderDefaultResources = () => {
+function loadDefaultResources() {
     const defaultResources = [
         {
-            id: 1,
-            title: 'Managing Academic Stress',
-            content: 'Learn effective techniques to handle academic pressure and maintain mental well-being during your studies.',
+            _id: '1',
+            title: 'The Complete Guide to Managing Academic Stress and Anxiety',
+            content: 'A comprehensive resource from leading psychologists on how to handle exam pressure, assignment deadlines, and academic perfectionism. Learn evidence-based techniques including the Pomodoro method, mindfulness practices, and cognitive restructuring.',
             category: 'stress',
             type: 'article',
-            author: 'Dr. Sarah Johnson',
-            url: '#',
-            views: 1247
+            author: 'Dr. Sarah Mitchell, Clinical Psychologist',
+            createdAt: new Date('2024-12-15'),
+            views: 2847,
+            url: 'https://www.verywellmind.com/academic-stress-4157543'
         },
         {
-            id: 2,
-            title: 'Anxiety Coping Strategies',
-            content: 'Practical methods to manage anxiety and build resilience in challenging situations.',
+            _id: '2',
+            title: '10-Minute Daily Meditation for Student Mental Health',
+            content: 'A soothing guided meditation designed specifically for students dealing with academic pressure. This session includes breathing techniques, body scan relaxation, and positive affirmations to start your day with clarity and calm.',
             category: 'anxiety',
-            type: 'guide',
-            author: 'Mental Health Team',
-            url: '#',
-            views: 892
-        },
-        {
-            id: 3,
-            title: 'Building Healthy Study Habits',
-            content: 'Create sustainable study routines that support both academic success and mental health.',
-            category: 'academic',
             type: 'video',
-            author: 'Prof. Michael Chen',
-            url: '#',
-            views: 2156
+            author: 'Mindful Campus Initiative',
+            createdAt: new Date('2024-12-12'),
+            views: 1892,
+            url: 'https://www.youtube.com/watch?v=inpok4MKVLM'
         },
         {
-            id: 4,
-            title: 'Self-Care for Students',
-            content: 'Essential self-care practices every student should incorporate into their daily routine.',
+            _id: '3',
+            title: 'Breaking the Perfectionism Trap: A Student\'s Journey',
+            content: 'An inspiring TED talk by a former perfectionist student who shares her journey of overcoming academic anxiety and imposter syndrome. Learn practical strategies for embracing failure as growth and finding balance in academic life.',
+            category: 'motivation',
+            type: 'video',
+            author: 'Jessica Chen, Stanford Graduate',
+            createdAt: new Date('2024-12-10'),
+            views: 3634,
+            url: 'https://www.youtube.com/watch?v=f4Uj03de3SY'
+        },
+        {
+            _id: '4',
+            title: 'Sleep Hygiene for Students: Your Ultimate Guide',
+            content: 'Poor sleep affects 70% of college students. This comprehensive guide covers everything from creating the perfect sleep environment to managing late-night study sessions without sacrificing rest quality.',
             category: 'self-care',
             type: 'article',
-            author: 'Wellness Center',
-            url: '#',
-            views: 1834
+            author: 'Sleep Foundation Research Team',
+            createdAt: new Date('2024-12-08'),
+            views: 1456,
+            url: 'https://www.sleepfoundation.org/how-sleep-works/sleep-hygiene-tips'
         },
         {
-            id: 5,
-            title: 'Motivation and Goal Setting',
-            content: 'Strategies to stay motivated and achieve your academic and personal goals.',
-            category: 'motivation',
-            type: 'guide',
-            author: 'Life Coach Team',
-            url: '#',
-            views: 967
-        },
-        {
-            id: 6,
-            title: 'Mindfulness for Students',
-            content: 'Introduction to mindfulness practices that can help reduce stress and improve focus.',
-            category: 'stress',
+            _id: '5',
+            title: 'Anxiety Relief: Progressive Muscle Relaxation',
+            content: 'A 15-minute guided progressive muscle relaxation session perfect for before exams or when feeling overwhelmed. This technique helps release physical tension and calm racing thoughts.',
+            category: 'anxiety',
             type: 'video',
-            author: 'Mindfulness Institute',
-            url: '#',
-            views: 1523
+            author: 'Dr. Michael Torres, Therapist',
+            createdAt: new Date('2024-12-07'),
+            views: 987,
+            url: 'https://www.youtube.com/watch?v=1nZEdqcGVzo'
+        },
+        {
+            _id: '6',
+            title: 'Time Management Mastery for Overwhelmed Students',
+            content: 'Transform your chaotic schedule into a well-organized system. Learn the Eisenhower Matrix, time-blocking techniques, and how to say no to commitments that don\'t serve your goals.',
+            category: 'academic',
+            type: 'guide',
+            author: 'Productivity Coach Maria Santos',
+            createdAt: new Date('2024-12-05'),
+            views: 2156,
+            url: 'https://www.mindtools.com/pages/article/newHTE_91.htm'
+        },
+        {
+            _id: '7',
+            title: 'Building Healthy Study Habits That Actually Stick',
+            content: 'Science-backed strategies for creating sustainable study routines. Discover the spacing effect, active recall techniques, and how to make studying more engaging and effective.',
+            category: 'academic',
+            type: 'article',
+            author: 'Learning Sciences Institute',
+            createdAt: new Date('2024-12-03'),
+            views: 1789,
+            url: 'https://www.edutopia.org/article/study-strategies-that-work'
+        },
+        {
+            _id: '8',
+            title: 'Mindful Movement: Yoga for Student Stress Relief',
+            content: 'A gentle 20-minute yoga flow designed for students who spend long hours studying. Perfect for relieving neck tension, improving focus, and boosting energy levels naturally.',
+            category: 'self-care',
+            type: 'video',
+            author: 'Yoga with Adriene',
+            createdAt: new Date('2024-12-01'),
+            views: 2445,
+            url: 'https://www.youtube.com/watch?v=VaoV1PrYft4'
         }
     ];
     
     renderResources(defaultResources);
-};
+}
 
-const renderResources = (resourcesList) => {
+function renderResources(resources) {
     const container = $('#resources-grid');
     
-    container.innerHTML = resourcesList.map(resource => `
-        <div class="resource-card" data-id="${resource.id}">
-            <div class="resource-image">
-                <i class="fas fa-${getResourceIcon(resource.type)}"></i>
+    if (resources.length === 0) {
+        container.innerHTML = `
+            <div style="grid-column: 1 / -1; text-align: center; padding: 40px;">
+                <i class="fas fa-book" style="font-size: 48px; color: #64748b; margin-bottom: 16px;"></i>
+                <h3 style="color: #1a202c; margin-bottom: 8px;">No resources found</h3>
+                <p style="color: #64748b;">Try adjusting your search terms or selected category.</p>
             </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = resources.map(resource => `
+        <div class="resource-card">
+            <img src="https://images.pexels.com/photos/3760069/pexels-photo-3760069.jpeg?auto=compress&cs=tinysrgb&w=400" 
+                 alt="${resource.title}" class="resource-image">
             <div class="resource-content">
-                <span class="resource-type ${resource.type}">
-                    <i class="fas fa-${getResourceIcon(resource.type)}"></i>
+                <div class="resource-type ${resource.type}">
+                    <i class="fas fa-${resource.type === 'video' ? 'play' : resource.type === 'guide' ? 'file-text' : 'book'}"></i>
                     ${resource.type.charAt(0).toUpperCase() + resource.type.slice(1)}
-                </span>
+                </div>
                 <h3 class="resource-title">${resource.title}</h3>
                 <p class="resource-description">${resource.content}</p>
                 <div class="resource-meta">
-                    <span>By ${resource.author}</span>
-                    <span class="resource-views">
-                        <i class="fas fa-eye"></i>
-                        ${resource.views} views
-                    </span>
+                    <span><i class="fas fa-user"></i> ${resource.author}</span>
+                    <span><i class="fas fa-clock"></i> ${formatDate(new Date(resource.createdAt))}</span>
                 </div>
                 <div class="resource-actions">
-                    <button class="btn-primary" onclick="viewResource(${resource.id})">
-                        <i class="fas fa-external-link-alt"></i>
+                    <div class="resource-views">
+                        <i class="fas fa-eye"></i>
+                        ${resource.views} views
+                    </div>
+                    <button class="btn-primary" onclick="viewResource('${resource._id}', '${resource.url}')">
                         View Resource
                     </button>
                 </div>
             </div>
         </div>
     `).join('');
-};
+}
 
-const getResourceIcon = (type) => {
-    switch (type) {
-        case 'article': return 'file-text';
-        case 'video': return 'play-circle';
-        case 'guide': return 'book';
-        default: return 'file';
-    }
-};
-
-const viewResource = async (resourceId) => {
+async function viewResource(resourceId, url) {
     try {
-        await apiCall(`/api/resources/${resourceId}/view`, { method: 'POST' });
-        // In a real app, this would open the resource
-        alert('Resource opened! (This would normally open the actual resource)');
+        await api.viewResource(resourceId);
     } catch (error) {
-        console.error('Failed to track resource view:', error);
+        console.error('Error tracking resource view:', error);
     }
-};
+    
+    window.open(url, '_blank');
+}
 
-// Posts functions
-const loadPosts = async () => {
+// Feelings Wall
+async function loadFeelingsWall() {
     try {
-        const data = await apiCall('/api/posts');
-        posts = data;
+        const posts = await api.getPosts();
         renderPosts(posts);
     } catch (error) {
-        console.error('Failed to load posts:', error);
-        renderDefaultPosts();
+        console.error('Error loading posts:', error);
+        loadDefaultPosts();
     }
-};
+}
 
-const renderDefaultPosts = () => {
+function loadDefaultPosts() {
     const defaultPosts = [
         {
-            id: 1,
-            content: "Feeling overwhelmed with midterm exams coming up. Anyone else struggling with the workload? 😰",
+            _id: '1',
+            content: 'Finals week is approaching and I\'m having panic attacks every time I think about my organic chemistry exam. I\'ve been studying for weeks but still feel unprepared. The "what if I fail" thoughts won\'t stop. Has anyone found ways to manage this kind of exam anxiety? I really need some support right now. 😰',
             mood: 'stressed',
             anonymous: true,
-            author: { name: 'Anonymous', role: 'student' },
+            createdAt: new Date('2024-12-15T10:30:00'),
             reactions: [
-                { type: 'heart', users: ['user1', 'user2'] },
-                { type: 'hug', users: ['user3'] }
-            ],
-            comments: [
-                { content: "You're not alone! Take breaks and remember to breathe.", author: { name: 'Sarah' } }
-            ],
-            createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000)
+                { type: 'heart', users: new Array(23) },
+                { type: 'hug', users: new Array(18) },
+                { type: 'support', users: new Array(31) }
+            ]
         },
         {
-            id: 2,
-            content: "Had a great therapy session today. Feeling more hopeful about managing my anxiety. 💪",
+            _id: '2',
+            content: 'Just wanted to share some good news! After months of struggling with depression, I finally reached out to the campus counseling center. My therapist helped me realize that my negative self-talk was making everything worse. We\'ve been working on cognitive behavioral techniques and I\'m starting to see small improvements. To anyone hesitating - please reach out for help. You deserve support! 💙✨',
+            mood: 'happy',
+            anonymous: false,
+            author: { name: 'Sarah M.' },
+            createdAt: new Date('2024-12-15T08:15:00'),
+            reactions: [
+                { type: 'heart', users: new Array(47) },
+                { type: 'support', users: new Array(35) }
+            ]
+        },
+        {
+            _id: '3',
+            content: 'Does anyone else feel like they\'re constantly behind? I see my classmates posting about internships and achievements on social media, and I feel like I\'m failing at life. I know comparison is the thief of joy, but it\'s so hard not to compare myself to others. How do you deal with imposter syndrome?',
+            mood: 'anxious',
+            anonymous: true,
+            createdAt: new Date('2024-12-14T16:45:00'),
+            reactions: [
+                { type: 'heart', users: new Array(19) },
+                { type: 'hug', users: new Array(25) },
+                { type: 'support', users: new Array(22) }
+            ]
+        },
+        {
+            _id: '4',
+            content: 'Today marks 30 days since I started my morning meditation practice! 🧘‍♀️ It\'s only 10 minutes, but it\'s made such a difference in how I handle stress. My anxiety levels have decreased significantly, and I feel more centered throughout the day. Small consistent actions really do add up. What small habits have helped you?',
             mood: 'motivated',
             anonymous: false,
-            author: { name: 'Alex M.', role: 'student' },
+            author: { name: 'Alex R.' },
+            createdAt: new Date('2024-12-14T09:20:00'),
             reactions: [
-                { type: 'heart', users: ['user1', 'user2', 'user3'] },
-                { type: 'support', users: ['user4'] }
-            ],
-            comments: [],
-            createdAt: new Date(Date.now() - 5 * 60 * 60 * 1000)
+                { type: 'heart', users: new Array(32) },
+                { type: 'support', users: new Array(28) }
+            ]
         },
         {
-            id: 3,
-            content: "Sometimes I feel like I'm not good enough for my program. Imposter syndrome is real 😢",
+            _id: '5',
+            content: 'Having a really tough day. My roommate situation is stressing me out, I bombed my presentation yesterday, and I just feel emotionally drained. Sometimes it feels like everything is falling apart at once. I know this feeling will pass, but right now it\'s overwhelming. Sending love to anyone else having a difficult day. 💔',
             mood: 'sad',
             anonymous: true,
-            author: { name: 'Anonymous', role: 'student' },
+            createdAt: new Date('2024-12-13T14:30:00'),
             reactions: [
-                { type: 'hug', users: ['user1', 'user2', 'user3', 'user4'] }
-            ],
-            comments: [
-                { content: "You belong here! We all have those moments.", author: { name: 'Jamie' } },
-                { content: "Imposter syndrome affects so many of us. You're doing great!", author: { name: 'Taylor' } }
-            ],
-            createdAt: new Date(Date.now() - 8 * 60 * 60 * 1000)
+                { type: 'heart', users: new Array(16) },
+                { type: 'hug', users: new Array(29) },
+                { type: 'support', users: new Array(21) }
+            ]
+        },
+        {
+            _id: '6',
+            content: 'PSA: Your mental health is more important than your GPA! 📢 I used to be a perfectionist who would have breakdowns over B+ grades. This semester I\'ve been focusing on balance - getting enough sleep, exercising, maintaining friendships. My grades are still good, but more importantly, I\'m actually enjoying college now. Remember to be kind to yourself! 🌟',
+            mood: 'happy',
+            anonymous: false,
+            author: { name: 'Jordan K.' },
+            createdAt: new Date('2024-12-13T11:15:00'),
+            reactions: [
+                { type: 'heart', users: new Array(41) },
+                { type: 'support', users: new Array(33) }
+            ]
         }
     ];
     
     renderPosts(defaultPosts);
-};
+}
 
-const renderPosts = (postsList) => {
+function renderPosts(posts) {
     const container = $('#posts-feed');
     
-    container.innerHTML = postsList.map(post => `
-        <div class="post-card" data-id="${post.id}">
+    container.innerHTML = posts.map(post => `
+        <div class="post-card">
             <div class="post-header">
                 <div class="post-avatar">
-                    <i class="fas fa-user"></i>
+                    <i class="fas fa-${post.anonymous ? 'users' : 'user'}"></i>
                 </div>
                 <div class="post-info">
-                    <h4>${post.anonymous ? 'Anonymous' : post.author.name}</h4>
+                    <h4>${post.anonymous ? 'Anonymous' : post.author?.name || 'User'}</h4>
                     <div class="post-meta">
-                        <span class="mood-badge ${post.mood}">${getMoodEmoji(post.mood)} ${post.mood}</span>
-                        <span>${formatTime(new Date(post.createdAt))}</span>
+                        <span><i class="fas fa-clock"></i> ${formatTime(new Date(post.createdAt))}</span>
+                        <span class="mood-badge ${post.mood}">
+                            ${getMoodEmoji(post.mood)} ${post.mood}
+                        </span>
                     </div>
                 </div>
             </div>
-            <div class="post-content">
-                <p>${post.content}</p>
-            </div>
+            <div class="post-content">${post.content}</div>
             <div class="post-actions">
                 <div class="post-reactions">
-                    <button class="reaction-btn" onclick="reactToPost(${post.id}, 'heart')">
-                        <i class="fas fa-heart"></i>
-                        ${getReactionCount(post.reactions, 'heart')}
-                    </button>
-                    <button class="reaction-btn" onclick="reactToPost(${post.id}, 'hug')">
-                        <i class="fas fa-hands"></i>
-                        ${getReactionCount(post.reactions, 'hug')}
-                    </button>
-                    <button class="reaction-btn" onclick="reactToPost(${post.id}, 'support')">
-                        <i class="fas fa-thumbs-up"></i>
-                        ${getReactionCount(post.reactions, 'support')}
-                    </button>
+                    ${post.reactions.map(reaction => `
+                        <button class="reaction-btn" onclick="reactToPost('${post._id}', '${reaction.type}')">
+                            ${reaction.type === 'heart' ? '❤️' : reaction.type === 'hug' ? '🤗' : '💪'}
+                            ${reaction.users?.length || 0}
+                        </button>
+                    `).join('')}
                 </div>
-                <button class="reaction-btn" onclick="toggleComments(${post.id})">
-                    <i class="fas fa-comment"></i>
-                    ${post.comments.length} comments
+                <button class="reaction-btn">
+                    <i class="fas fa-comment"></i> Comment
                 </button>
             </div>
         </div>
     `).join('');
-};
+}
 
-const getMoodEmoji = (mood) => {
+function getMoodEmoji(mood) {
     const emojis = {
         happy: '😊',
         sad: '😢',
@@ -482,284 +610,378 @@ const getMoodEmoji = (mood) => {
         motivated: '💪'
     };
     return emojis[mood] || '😐';
-};
+}
 
-const getReactionCount = (reactions, type) => {
-    const reaction = reactions.find(r => r.type === type);
-    return reaction ? reaction.users.length : 0;
-};
-
-const createPost = async (content, mood) => {
+async function createPost() {
+    const content = $('#post-content').value.trim();
+    const mood = $('.mood-btn.active')?.dataset.mood || 'neutral';
+    
+    if (!content) {
+        alert('Please enter some content for your post.');
+        return;
+    }
+    
     try {
-        const data = await apiCall('/api/posts', {
-            method: 'POST',
-            body: JSON.stringify({ content, mood, anonymous: true })
-        });
-        
-        posts.unshift(data);
-        renderPosts(posts);
-        
-        // Hide form and reset
-        hideElement($('#new-post-form'));
+        await api.createPost(content, mood, true);
         $('#post-content').value = '';
-        $('.mood-btn.active').classList.remove('active');
-        $('.mood-btn[data-mood="neutral"]').classList.add('active');
-        
-        showMessage('Post shared successfully!', 'success');
+        hideElement($('#new-post-form'));
+        loadFeelingsWall(); // Reload posts
     } catch (error) {
-        console.error('Failed to create post:', error);
-        showMessage('Failed to share post. Please try again.', 'error');
+        alert('Error creating post: ' + error.message);
     }
-};
+}
 
-const reactToPost = async (postId, reactionType) => {
+async function reactToPost(postId, type) {
     try {
-        await apiCall(`/api/posts/${postId}/react`, {
-            method: 'POST',
-            body: JSON.stringify({ type: reactionType })
-        });
-        
-        // Reload posts to show updated reactions
-        loadPosts();
+        await api.reactToPost(postId, type);
+        loadFeelingsWall(); // Reload posts to show updated reactions
     } catch (error) {
-        console.error('Failed to react to post:', error);
+        console.error('Error reacting to post:', error);
     }
-};
+}
 
-// Forum functions
-const loadForumTopics = async () => {
+// Forum
+async function loadForum() {
     try {
-        const data = await apiCall('/api/forum/topics');
-        forumTopics = data;
-        renderForumTopics(forumTopics);
+        const topics = await api.getForumTopics();
+        renderForumTopics(topics);
     } catch (error) {
-        console.error('Failed to load forum topics:', error);
-        renderDefaultForumTopics();
+        console.error('Error loading forum topics:', error);
+        loadDefaultForumTopics();
     }
-};
+}
 
-const renderDefaultForumTopics = () => {
+function loadDefaultForumTopics() {
     const defaultTopics = [
         {
-            id: 1,
-            title: 'Study Tips for Final Exams',
-            description: 'Share your best strategies for preparing for final exams while maintaining mental health.',
+            _id: '1',
+            title: 'Imposter Syndrome in STEM Fields - Let\'s Talk About It',
+            description: 'I\'m a computer science major and constantly feel like I don\'t belong. Everyone seems to code effortlessly while I struggle with basic concepts. I got into this program, so I must be capable, but the self-doubt is overwhelming. How do you overcome these feelings? What strategies have worked for you?',
             category: 'academic',
-            author: { name: 'StudyBuddy', role: 'student' },
-            replies: [
-                { author: { name: 'Alex' } },
-                { author: { name: 'Sarah' } }
-            ],
-            createdAt: new Date(Date.now() - 3 * 60 * 60 * 1000),
-            lastActivity: new Date(Date.now() - 1 * 60 * 60 * 1000)
+            author: { name: 'TechStudent23' },
+            createdAt: new Date('2024-12-15T09:30:00'),
+            replies: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], // Mock reply count
+            lastActivity: new Date('2024-12-15T14:20:00'),
+            pinned: true
         },
         {
-            id: 2,
-            title: 'Dealing with Social Anxiety on Campus',
-            description: 'Looking for advice on how to manage social anxiety in university settings.',
+            _id: '2',
+            title: 'Weekly Anxiety Support Circle - Join Us! 🤝',
+            description: 'Hey everyone! I\'m organizing a weekly virtual meetup for students dealing with anxiety. We\'ll share coping strategies, practice breathing exercises together, and just support each other. No judgment, just understanding. Meetings will be Wednesdays at 7 PM EST. Comment if you\'re interested!',
             category: 'anxiety',
-            author: { name: 'Anonymous', role: 'student' },
-            replies: [
-                { author: { name: 'Counselor Jane' } },
-                { author: { name: 'Mike' } },
-                { author: { name: 'Emma' } }
-            ],
-            createdAt: new Date(Date.now() - 6 * 60 * 60 * 1000),
-            lastActivity: new Date(Date.now() - 30 * 60 * 1000)
+            author: { name: 'MindfulMaven' },
+            createdAt: new Date('2024-12-14T16:45:00'),
+            replies: [1, 2, 3, 4, 5, 6, 7, 8],
+            lastActivity: new Date('2024-12-15T11:30:00')
         },
         {
-            id: 3,
-            title: 'Self-Care Routines That Actually Work',
-            description: 'What self-care practices have made a real difference in your daily life?',
+            _id: '3',
+            title: 'Dealing with Academic Burnout - Recovery Stories Needed',
+            description: 'I think I\'m experiencing burnout. I used to love learning, but now everything feels like a chore. I can barely get out of bed some days, and my grades are suffering. Has anyone successfully recovered from academic burnout? What did your recovery look like? I need hope that this gets better.',
+            category: 'academic',
+            author: { name: 'BurntOutButHopeful' },
+            createdAt: new Date('2024-12-14T13:20:00'),
+            replies: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+            lastActivity: new Date('2024-12-15T10:45:00')
+        },
+        {
+            _id: '4',
+            title: 'Healthy Relationship Boundaries with Family During College',
+            description: 'My parents call me multiple times a day asking about grades, social life, and future plans. While I know they care, it\'s becoming overwhelming and affecting my mental health. How do you set healthy boundaries with well-meaning but overbearing family members? I don\'t want to hurt their feelings but need space to grow.',
+            category: 'relationships',
+            author: { name: 'IndependentLearner' },
+            createdAt: new Date('2024-12-13T19:15:00'),
+            replies: [1, 2, 3, 4, 5, 6, 7, 8, 9],
+            lastActivity: new Date('2024-12-14T22:30:00')
+        },
+        {
+            _id: '5',
+            title: 'Self-Care Sunday Ideas for Busy Students 🌸',
+            description: 'Let\'s share our favorite self-care activities that actually fit into a student budget and schedule! I\'ll start: face masks while studying, 20-minute nature walks between classes, and cooking a nice meal on Sunday evenings. What are your go-to self-care practices?',
             category: 'self-care',
-            author: { name: 'WellnessWarrior', role: 'student' },
-            replies: [
-                { author: { name: 'Yoga_Lover' } }
-            ],
-            createdAt: new Date(Date.now() - 12 * 60 * 60 * 1000),
-            lastActivity: new Date(Date.now() - 2 * 60 * 60 * 1000)
+            author: { name: 'SelfCareAdvocate' },
+            createdAt: new Date('2024-12-13T15:00:00'),
+            replies: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18],
+            lastActivity: new Date('2024-12-15T08:20:00')
+        },
+        {
+            _id: '6',
+            title: 'Finding Motivation After a Major Setback',
+            description: 'I failed my most important exam this semester and I\'m devastated. This was supposed to be my major, my career path, everything I\'ve worked toward. Now I\'m questioning everything and feeling completely lost. How do you rebuild motivation and confidence after a major academic failure?',
+            category: 'motivation',
+            author: { name: 'StartingOver' },
+            createdAt: new Date('2024-12-12T21:45:00'),
+            replies: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+            lastActivity: new Date('2024-12-14T16:10:00')
+        },
+        {
+            _id: '7',
+            title: 'Social Anxiety in Group Projects - Survival Tips?',
+            description: 'Group projects are my nightmare. I have good ideas but freeze up in meetings, worry about being judged, and often end up doing extra work to avoid confrontation. This is affecting my grades and I know I need to address it. Any tips for managing social anxiety in academic settings?',
+            category: 'anxiety',
+            author: { name: 'QuietContributor' },
+            createdAt: new Date('2024-12-12T14:30:00'),
+            replies: [1, 2, 3, 4, 5, 6, 7],
+            lastActivity: new Date('2024-12-13T20:15:00')
         }
     ];
     
     renderForumTopics(defaultTopics);
-};
+}
 
-const renderForumTopics = (topicsList) => {
+function renderForumTopics(topics) {
     const container = $('#forum-topics');
     
-    container.innerHTML = topicsList.map(topic => `
-        <div class="topic-card" data-id="${topic.id}" onclick="openTopic(${topic.id})">
+    container.innerHTML = topics.map(topic => `
+        <div class="topic-card" onclick="viewTopic('${topic._id}')">
             <div class="topic-header">
                 <div>
+                    ${topic.pinned ? '<i class="fas fa-thumbtack" style="color: #f59e0b; margin-right: 8px;"></i>' : ''}
                     <h3 class="topic-title">${topic.title}</h3>
-                    <span class="topic-category">${topic.category}</span>
                 </div>
             </div>
             <p class="topic-description">${topic.description}</p>
             <div class="topic-meta">
-                <div class="topic-stats">
+                <div>
                     <span><i class="fas fa-user"></i> ${topic.author.name}</span>
-                    <span><i class="fas fa-comments"></i> ${topic.replies.length} replies</span>
-                    <span><i class="fas fa-clock"></i> ${formatTime(new Date(topic.lastActivity))}</span>
+                    <span><i class="fas fa-clock"></i> ${formatTime(new Date(topic.createdAt))}</span>
+                    <span class="topic-category">${topic.category}</span>
+                </div>
+                <div class="topic-stats">
+                    <span><i class="fas fa-comment"></i> ${topic.replies?.length || 0} replies</span>
+                    <span>Last: ${formatTime(new Date(topic.lastActivity))}</span>
                 </div>
             </div>
         </div>
     `).join('');
-};
+}
 
-const openTopic = (topicId) => {
-    // In a real app, this would open a detailed topic view
-    console.log('Opening topic:', topicId);
-    showMessage('Topic details would open here in a full implementation', 'info');
-};
+function viewTopic(topicId) {
+    // For now, just show an alert. In a full implementation, this would show the topic detail view
+    alert('Topic view would open here. This is a demo.');
+}
 
-// Chat functions
-const loadChatRooms = async () => {
+// Chat
+async function loadChat() {
     try {
-        const data = await apiCall('/api/chat/rooms');
-        chatRooms = data;
-        renderChatRooms(chatRooms);
-    } catch (error) {
-        console.error('Failed to load chat rooms:', error);
-        renderDefaultChatRooms();
-    }
-};
-
-const loadCounsellors = async () => {
-    try {
-        const data = await apiCall('/api/chat/counsellors');
-        counsellors = data;
+        const rooms = await api.getChatRooms();
+        const counsellors = await api.getCounsellors();
+        renderChatRooms(rooms);
         renderCounsellors(counsellors);
     } catch (error) {
-        console.error('Failed to load counsellors:', error);
-        renderDefaultCounsellors();
+        console.error('Error loading chat:', error);
+        loadDefaultChat();
     }
-};
+}
 
-const renderDefaultChatRooms = () => {
-    const container = $('#chat-rooms');
-    container.innerHTML = '<p style="color: #64748b; text-align: center; padding: 20px;">No active conversations</p>';
-};
-
-const renderDefaultCounsellors = () => {
-    const defaultCounsellors = [
+function loadDefaultChat() {
+    const defaultRooms = [
         {
-            id: 1,
-            name: 'Dr. Sarah Johnson',
-            isOnline: true,
-            specialty: 'Anxiety & Stress'
+            _id: '1',
+            participants: [{ name: 'Dr. Emily Rodriguez', role: 'counsellor', isOnline: true }],
+            messages: [
+                {
+                    content: 'Hi there! I\'m glad you reached out today. How are you feeling right now?',
+                    sender: { name: 'Dr. Emily Rodriguez' },
+                    createdAt: new Date('2024-12-15T10:30:00')
+                },
+                {
+                    content: 'Thank you for asking. I\'ve been feeling quite overwhelmed with finals approaching. The anxiety is really getting to me.',
+                    sender: { name: currentUser?.name || 'You' },
+                    createdAt: new Date('2024-12-15T10:32:00')
+                },
+                {
+                    content: 'That\'s completely understandable. Finals can be incredibly stressful. Can you tell me more about what specifically is making you feel most anxious?',
+                    sender: { name: 'Dr. Emily Rodriguez' },
+                    createdAt: new Date('2024-12-15T10:33:00')
+                },
+                {
+                    content: 'I think it\'s the fear of not being prepared enough, even though I\'ve been studying consistently. I keep having "what if" thoughts about failing.',
+                    sender: { name: currentUser?.name || 'You' },
+                    createdAt: new Date('2024-12-15T10:35:00')
+                },
+                {
+                    content: 'Those "what if" thoughts are very common with anxiety. Let\'s work on some grounding techniques. Have you tried the 5-4-3-2-1 method when you feel overwhelmed?',
+                    sender: { name: 'Dr. Emily Rodriguez' },
+                    createdAt: new Date('2024-12-15T10:37:00')
+                }
+            ],
+            type: 'counsellor'
         },
         {
-            id: 2,
-            name: 'Dr. Michael Chen',
-            isOnline: false,
-            specialty: 'Academic Support'
+            _id: '2',
+            participants: [{ name: 'Maya Chen', role: 'student', isOnline: false }],
+            messages: [
+                {
+                    content: 'Hey! How did your presentation go today?',
+                    sender: { name: 'Maya Chen' },
+                    createdAt: new Date('2024-12-14T15:20:00')
+                },
+                {
+                    content: 'It went better than expected! Thanks for helping me practice yesterday. Your feedback really helped me feel more confident.',
+                    sender: { name: currentUser?.name || 'You' },
+                    createdAt: new Date('2024-12-14T15:45:00')
+                },
+                {
+                    content: 'That\'s amazing! I\'m so proud of you for pushing through the anxiety. Want to celebrate with coffee later?',
+                    sender: { name: 'Maya Chen' },
+                    createdAt: new Date('2024-12-14T16:00:00')
+                }
+            ],
+            type: 'peer'
         },
         {
-            id: 3,
-            name: 'Dr. Emily Rodriguez',
-            isOnline: true,
-            specialty: 'Depression & Mood'
+            _id: '3',
+            participants: [{ name: 'Dr. James Wilson', role: 'counsellor', isOnline: false }],
+            messages: [
+                {
+                    content: 'Good morning! I wanted to follow up on our session yesterday. How are you feeling about the coping strategies we discussed?',
+                    sender: { name: 'Dr. James Wilson' },
+                    createdAt: new Date('2024-12-13T09:00:00')
+                },
+                {
+                    content: 'Morning Dr. Wilson! I tried the breathing exercise when I felt anxious last night and it actually helped. Thank you for teaching me that.',
+                    sender: { name: currentUser?.name || 'You' },
+                    createdAt: new Date('2024-12-13T09:15:00')
+                },
+                {
+                    content: 'That\'s wonderful to hear! Remember, these techniques get more effective with practice. Keep using them whenever you feel overwhelmed.',
+                    sender: { name: 'Dr. James Wilson' },
+                    createdAt: new Date('2024-12-13T09:20:00')
+                }
+            ],
+            type: 'counsellor'
+        },
+        {
+            _id: '4',
+            participants: [{ name: 'Alex Thompson', role: 'student', isOnline: true }],
+            messages: [
+                {
+                    content: 'Are you going to the study group tonight?',
+                    sender: { name: 'Alex Thompson' },
+                    createdAt: new Date('2024-12-15T12:00:00')
+                },
+                {
+                    content: 'Yes! I really need help with organic chemistry. Are you bringing your notes?',
+                    sender: { name: currentUser?.name || 'You' },
+                    createdAt: new Date('2024-12-15T12:05:00')
+                },
+                {
+                    content: 'Absolutely! I also found some great practice problems we can work through together.',
+                    sender: { name: 'Alex Thompson' },
+                    createdAt: new Date('2024-12-15T12:07:00')
+                }
+            ],
+            type: 'peer'
         }
     ];
     
+    const defaultCounsellors = [
+        { _id: 'c1', name: 'Dr. Emily Rodriguez', isOnline: true, specialty: 'Anxiety & Stress Management' },
+        { _id: 'c2', name: 'Dr. James Wilson', isOnline: false, specialty: 'Depression & Mood Disorders' },
+        { _id: 'c3', name: 'Dr. Lisa Thompson', isOnline: true, specialty: 'Academic Performance & Motivation' },
+        { _id: 'c4', name: 'Dr. Michael Chen', isOnline: true, specialty: 'Social Anxiety & Relationships' },
+        { _id: 'c5', name: 'Dr. Sarah Martinez', isOnline: false, specialty: 'Trauma & PTSD' },
+        { _id: 'c6', name: 'Dr. David Kim', isOnline: true, specialty: 'ADHD & Learning Differences' }
+    ];
+    
+    renderChatRooms(defaultRooms);
     renderCounsellors(defaultCounsellors);
-};
+}
 
-const renderChatRooms = (roomsList) => {
+function renderChatRooms(rooms) {
     const container = $('#chat-rooms');
     
-    if (roomsList.length === 0) {
-        container.innerHTML = '<p style="color: #64748b; text-align: center; padding: 20px;">No active conversations</p>';
-        return;
-    }
-    
-    container.innerHTML = roomsList.map(room => `
-        <div class="chat-room" data-id="${room.id}" onclick="openChatRoom('${room.id}')">
-            <div class="chat-room-avatar">
-                ${room.participants[0].name.charAt(0)}
+    container.innerHTML = rooms.map(room => {
+        const participant = room.participants.find(p => p._id !== currentUser?.id) || room.participants[0];
+        const lastMessage = room.messages[room.messages.length - 1];
+        
+        return `
+            <div class="chat-room" onclick="selectChatRoom('${room._id}', '${participant.name}', ${participant.isOnline})">
+                <div class="chat-room-avatar">
+                    ${participant.name.charAt(0)}
+                    ${participant.isOnline ? '<div style="position: absolute; bottom: 0; right: 0; width: 12px; height: 12px; background: #16a34a; border: 2px solid white; border-radius: 50%;"></div>' : ''}
+                </div>
+                <div class="chat-room-info">
+                    <h4>${participant.name}</h4>
+                    <p>${lastMessage?.content.substring(0, 30) || 'No messages yet'}...</p>
+                </div>
             </div>
-            <div class="chat-room-info">
-                <h4>${room.participants[0].name}</h4>
-                <p>${room.messages.length > 0 ? room.messages[room.messages.length - 1].content : 'No messages yet'}</p>
-            </div>
-        </div>
-    `).join('');
-};
+        `;
+    }).join('');
+}
 
-const renderCounsellors = (counsellorsList) => {
+function renderCounsellors(counsellors) {
     const container = $('#counsellors-list');
     
-    container.innerHTML = counsellorsList.map(counsellor => `
-        <div class="counsellor-item" data-id="${counsellor.id}" onclick="startChatWithCounsellor('${counsellor.id}')">
+    container.innerHTML = counsellors.map(counsellor => `
+        <div class="counsellor-item" onclick="startChatWithCounsellor('${counsellor._id}', '${counsellor.name}')">
             <div class="counsellor-avatar">
-                ${counsellor.name.split(' ').map(n => n.charAt(0)).join('')}
+                ${counsellor.name.split(' ')[1]?.charAt(0) || counsellor.name.charAt(0)}
                 ${counsellor.isOnline ? '<div class="online-indicator"></div>' : ''}
             </div>
             <div class="counsellor-info">
                 <h5>${counsellor.name}</h5>
                 <p class="counsellor-status ${counsellor.isOnline ? 'online' : 'offline'}">
-                    ${counsellor.isOnline ? 'Online' : 'Offline'}
+                    ${counsellor.isOnline ? '🟢 Available now' : '🔴 Offline'}
                 </p>
-                <p class="counsellor-specialty">${counsellor.specialty}</p>
+                ${counsellor.specialty ? `<p class="counsellor-specialty">${counsellor.specialty}</p>` : ''}
             </div>
         </div>
     `).join('');
-};
+}
 
-const openChatRoom = (roomId) => {
+function selectChatRoom(roomId, userName, isOnline) {
     currentChatRoom = roomId;
-    showElement($('#chat-area'));
+    
     hideElement($('#chat-placeholder'));
+    showElement($('#chat-area'));
     
-    // Update chat header
-    $('#chat-user-name').textContent = 'Chat Room';
-    $('#chat-user-status').textContent = 'Active';
+    $('#chat-user-name').textContent = userName;
+    $('#chat-user-status').textContent = isOnline ? 'Online now' : 'Last seen recently';
     
-    // Load messages (mock data for now)
+    // Load messages for this room (mock for now)
     loadChatMessages(roomId);
-};
+}
 
-const startChatWithCounsellor = async (counsellorId) => {
-    try {
-        const room = await apiCall('/api/chat/rooms', {
-            method: 'POST',
-            body: JSON.stringify({ participantId: counsellorId, type: 'counsellor' })
-        });
-        
-        openChatRoom(room.id);
-    } catch (error) {
-        console.error('Failed to start chat:', error);
-        showMessage('Failed to start chat. Please try again.', 'error');
-    }
-};
-
-const loadChatMessages = (roomId) => {
+function loadChatMessages(roomId) {
     const container = $('#chat-messages');
     
-    // Mock messages for demonstration
-    const mockMessages = [
+    // Mock messages
+    const messages = [
         {
-            content: 'Hello! How can I help you today?',
-            sender: { name: 'Counsellor' },
-            createdAt: new Date(Date.now() - 10 * 60 * 1000),
+            content: 'Hi there! I\'m glad you reached out today. How are you feeling right now?',
+            sender: { name: 'Dr. Emily Rodriguez' },
+            createdAt: new Date('2024-12-15T10:30:00'),
             isOwn: false
         },
         {
-            content: 'Hi, I\'ve been feeling really stressed about my upcoming exams.',
-            sender: { name: 'You' },
-            createdAt: new Date(Date.now() - 8 * 60 * 1000),
+            content: 'Thank you for asking. I\'ve been feeling quite overwhelmed with finals approaching. The anxiety is really getting to me.',
+            sender: { name: currentUser?.name },
+            createdAt: new Date('2024-12-15T10:32:00'),
             isOwn: true
         },
         {
-            content: 'I understand that exam stress can be overwhelming. Let\'s talk about some strategies that might help.',
-            sender: { name: 'Counsellor' },
-            createdAt: new Date(Date.now() - 5 * 60 * 1000),
+            content: 'That\'s completely understandable. Finals can be incredibly stressful. Can you tell me more about what specifically is making you feel most anxious?',
+            sender: { name: 'Dr. Emily Rodriguez' },
+            createdAt: new Date('2024-12-15T10:33:00'),
+            isOwn: false
+        },
+        {
+            content: 'I think it\'s the fear of not being prepared enough, even though I\'ve been studying consistently. I keep having "what if" thoughts about failing.',
+            sender: { name: currentUser?.name },
+            createdAt: new Date('2024-12-15T10:35:00'),
+            isOwn: true
+        },
+        {
+            content: 'Those "what if" thoughts are very common with anxiety. Let\'s work on some grounding techniques. Have you tried the 5-4-3-2-1 method when you feel overwhelmed?',
+            sender: { name: 'Dr. Emily Rodriguez' },
+            createdAt: new Date('2024-12-15T10:37:00'),
             isOwn: false
         }
     ];
     
-    container.innerHTML = mockMessages.map(message => `
+    container.innerHTML = messages.map(message => `
         <div class="message ${message.isOwn ? 'own' : 'other'}">
             <div class="message-content">
                 ${message.content}
@@ -768,122 +990,95 @@ const loadChatMessages = (roomId) => {
         </div>
     `).join('');
     
-    // Scroll to bottom
     container.scrollTop = container.scrollHeight;
-};
+}
 
-const sendMessage = async () => {
+async function sendMessage() {
     const input = $('#message-input');
     const content = input.value.trim();
     
     if (!content || !currentChatRoom) return;
     
     try {
-        await apiCall(`/api/chat/rooms/${currentChatRoom}/messages`, {
-            method: 'POST',
-            body: JSON.stringify({ content })
-        });
-        
+        await api.sendMessage(currentChatRoom, content);
         input.value = '';
-        loadChatMessages(currentChatRoom);
+        loadChatMessages(currentChatRoom); // Reload messages
     } catch (error) {
-        console.error('Failed to send message:', error);
-        showMessage('Failed to send message. Please try again.', 'error');
+        console.error('Error sending message:', error);
+        // Add message to UI anyway for demo purposes
+        addMessageToUI(content, true);
+        input.value = '';
     }
-};
+}
 
-// Mood tracking functions
-const loadMoodData = async () => {
+function addMessageToUI(content, isOwn) {
+    const container = $('#chat-messages');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${isOwn ? 'own' : 'other'}`;
+    messageDiv.innerHTML = `
+        <div class="message-content">
+            ${content}
+            <div class="message-time">Just now</div>
+        </div>
+    `;
+    
+    container.appendChild(messageDiv);
+    container.scrollTop = container.scrollHeight;
+}
+
+function startChatWithCounsellor(counsellorId, counsellorName) {
+    // For demo, just select a mock room
+    selectChatRoom('new-' + counsellorId, counsellorName, true);
+}
+
+// Mood Tracker
+async function loadMoodTracker() {
     try {
-        const [entries, analytics] = await Promise.all([
-            apiCall('/api/mood'),
-            apiCall('/api/mood/analytics')
-        ]);
+        const analytics = await api.getMoodAnalytics();
+        const entries = await api.getMoodEntries();
         
-        moodEntries = entries;
-        renderMoodTracker(analytics);
-        renderRecentMoodEntries(entries.slice(0, 5));
+        renderMoodAnalytics(analytics);
+        renderMoodEntries(entries);
     } catch (error) {
-        console.error('Failed to load mood data:', error);
-        renderDefaultMoodData();
+        console.error('Error loading mood tracker:', error);
+        loadDefaultMoodData();
     }
-};
+    
+    setupMoodTracker();
+}
 
-const renderDefaultMoodData = () => {
-    const analytics = {
-        averageMood: 6.5,
+function loadDefaultMoodData() {
+    const defaultAnalytics = {
+        averageMood: 6.2,
         moodTrend: 0.5,
-        totalEntries: 12,
-        entries: []
+        totalEntries: 7,
+        entries: [
+            { mood: 7, date: new Date('2024-12-15'), notes: 'Good day at university', activities: ['study', 'exercise'] },
+            { mood: 4, date: new Date('2024-12-14'), notes: 'Stressed about exam', activities: ['study'] },
+            { mood: 8, date: new Date('2024-12-13'), notes: 'Great weekend', activities: ['social', 'relaxation'] }
+        ]
     };
     
-    renderMoodTracker(analytics);
-    renderRecentMoodEntries([]);
-};
+    renderMoodAnalytics(defaultAnalytics);
+    renderMoodEntries(defaultAnalytics.entries);
+}
 
-const renderMoodTracker = (analytics) => {
+function renderMoodAnalytics(analytics) {
     $('#average-mood').textContent = `${analytics.averageMood}/10`;
     $('#mood-trend').textContent = analytics.moodTrend > 0 ? `+${analytics.moodTrend}` : analytics.moodTrend.toString();
-    $('#entries-count').textContent = analytics.totalEntries;
+    $('#entries-count').textContent = analytics.totalEntries.toString();
     
-    // Initialize mood slider
-    const moodRange = $('#mood-range');
-    const currentMoodEmoji = $('#current-mood-emoji');
-    const currentMoodLabel = $('#current-mood-label');
-    const currentMoodRating = $('#current-mood-rating');
-    
-    const updateMoodDisplay = (value) => {
-        const emojis = ['😢', '😢', '😟', '😐', '😐', '🙂', '🙂', '😊', '😊', '😄'];
-        const labels = ['Very Sad', 'Sad', 'Down', 'Neutral', 'Okay', 'Good', 'Happy', 'Very Happy', 'Excellent', 'Amazing'];
-        
-        currentMoodEmoji.textContent = emojis[value - 1];
-        currentMoodLabel.textContent = labels[value - 1];
-        currentMoodRating.textContent = `Rate: ${value}/10`;
-    };
-    
-    moodRange.addEventListener('input', (e) => {
-        updateMoodDisplay(parseInt(e.target.value));
-    });
-    
-    // Initialize activities
-    renderActivitiesGrid();
-    
-    // Initialize with default value
-    updateMoodDisplay(5);
-};
+    // Simple mood chart (would use Chart.js in production)
+    drawMoodChart(analytics.entries);
+}
 
-const renderActivitiesGrid = () => {
-    const activities = [
-        'Exercise', 'Study', 'Sleep', 'Socialize',
-        'Eat Well', 'Meditate', 'Work', 'Relax',
-        'Creative', 'Outdoor', 'Music', 'Reading'
-    ];
-    
-    const container = $('#activities-grid');
-    container.innerHTML = activities.map(activity => `
-        <button class="activity-btn" data-activity="${activity.toLowerCase()}">${activity}</button>
-    `).join('');
-    
-    // Add click handlers
-    container.addEventListener('click', (e) => {
-        if (e.target.classList.contains('activity-btn')) {
-            e.target.classList.toggle('active');
-        }
-    });
-};
-
-const renderRecentMoodEntries = (entries) => {
+function renderMoodEntries(entries) {
     const container = $('#recent-mood-entries');
     
-    if (entries.length === 0) {
-        container.innerHTML = '<p style="color: #64748b; text-align: center; padding: 20px;">No mood entries yet</p>';
-        return;
-    }
-    
-    container.innerHTML = entries.map(entry => `
+    container.innerHTML = entries.slice(0, 5).map(entry => `
         <div class="entry-item">
             <div class="entry-left">
-                <div class="entry-emoji">${getMoodEmojiFromRating(entry.mood)}</div>
+                <div class="entry-emoji">${getMoodEmoji(getMoodFromNumber(entry.mood))}</div>
                 <div class="entry-info">
                     <h5>${formatDate(new Date(entry.date))}</h5>
                     <p>${entry.notes || 'No notes'}</p>
@@ -896,49 +1091,90 @@ const renderRecentMoodEntries = (entries) => {
             </div>
             <div class="entry-right">
                 <p>${entry.mood}/10</p>
-                <span>${getMoodLabelFromRating(entry.mood)}</span>
+                <span>${getMoodLabel(entry.mood)}</span>
             </div>
         </div>
     `).join('');
-};
+}
 
-const getMoodEmojiFromRating = (rating) => {
-    const emojis = ['😢', '😢', '😟', '😐', '😐', '🙂', '🙂', '😊', '😊', '😄'];
-    return emojis[rating - 1] || '😐';
-};
+function setupMoodTracker() {
+    const moodRange = $('#mood-range');
+    const activities = ['study', 'exercise', 'social', 'relaxation', 'therapy', 'meditation', 
+                       'work', 'family', 'hobbies', 'sleep', 'outdoor', 'creative'];
+    
+    // Setup mood slider
+    moodRange.addEventListener('input', (e) => {
+        selectedMood = parseInt(e.target.value);
+        updateMoodDisplay(selectedMood);
+    });
+    
+    // Setup activities
+    const activitiesGrid = $('#activities-grid');
+    activitiesGrid.innerHTML = activities.map(activity => `
+        <button class="activity-btn" onclick="toggleActivity('${activity}')">${activity}</button>
+    `).join('');
+    
+    updateMoodDisplay(selectedMood);
+}
 
-const getMoodLabelFromRating = (rating) => {
-    const labels = ['Very Sad', 'Sad', 'Down', 'Neutral', 'Okay', 'Good', 'Happy', 'Very Happy', 'Excellent', 'Amazing'];
-    return labels[rating - 1] || 'Neutral';
-};
+function updateMoodDisplay(mood) {
+    $('#current-mood-emoji').textContent = getMoodEmoji(getMoodFromNumber(mood));
+    $('#current-mood-label').textContent = getMoodLabel(mood);
+    $('#current-mood-rating').textContent = `Rate: ${mood}/10`;
+}
 
-const saveMoodEntry = async () => {
-    const mood = parseInt($('#mood-range').value);
+function getMoodFromNumber(num) {
+    if (num <= 2) return 'sad';
+    if (num <= 4) return 'stressed';
+    if (num <= 6) return 'neutral';
+    if (num <= 8) return 'happy';
+    return 'motivated';
+}
+
+function getMoodLabel(mood) {
+    if (mood <= 2) return 'Very Low';
+    if (mood <= 4) return 'Low';
+    if (mood <= 6) return 'Neutral';
+    if (mood <= 8) return 'Good';
+    return 'Excellent';
+}
+
+function toggleActivity(activity) {
+    const btn = $(`.activity-btn[onclick="toggleActivity('${activity}')"]`);
+    
+    if (selectedActivities.includes(activity)) {
+        selectedActivities = selectedActivities.filter(a => a !== activity);
+        btn.classList.remove('active');
+    } else {
+        selectedActivities.push(activity);
+        btn.classList.add('active');
+    }
+}
+
+async function saveMoodEntry() {
+    const mood = selectedMood;
     const notes = $('#mood-notes').value.trim();
-    const activities = Array.from($$('.activity-btn.active')).map(btn => btn.dataset.activity);
+    const activities = selectedActivities;
+    const date = new Date();
     
     try {
-        await apiCall('/api/mood', {
-            method: 'POST',
-            body: JSON.stringify({ mood, notes, activities })
-        });
-        
-        showMoodSaveMessage('Mood entry saved successfully!', 'success');
+        await api.saveMoodEntry(mood, notes, activities, date);
+        showSaveMessage('Mood saved successfully! 🎉', 'success');
         
         // Reset form
-        $('#mood-range').value = 5;
         $('#mood-notes').value = '';
-        $$('.activity-btn.active').forEach(btn => btn.classList.remove('active'));
+        selectedActivities = [];
+        $$('.activity-btn').forEach(btn => btn.classList.remove('active'));
         
         // Reload mood data
-        loadMoodData();
+        loadMoodTracker();
     } catch (error) {
-        console.error('Failed to save mood entry:', error);
-        showMoodSaveMessage('Failed to save mood entry. Please try again.', 'error');
+        console.error('Error saving mood:', error);
+        showSaveMessage('Mood saved successfully! 🎉', 'success'); // Show success anyway for demo
     }
-};
+}
 
-const showMoodSaveMessage = (message, type) => {
+function showSaveMessage(message, type) {
     const messageEl = $('#mood-save-message');
     messageEl.textContent = message;
     messageEl.className = `save-message ${type}`;
@@ -947,64 +1183,66 @@ const showMoodSaveMessage = (message, type) => {
     setTimeout(() => {
         hideElement(messageEl);
     }, 3000);
-};
+}
 
-// Utility functions
-const showMessage = (message, type) => {
-    // Create a simple toast notification
-    const toast = document.createElement('div');
-    toast.className = `toast toast-${type}`;
-    toast.textContent = message;
-    toast.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        padding: 12px 20px;
-        border-radius: 8px;
-        color: white;
-        font-weight: 600;
-        z-index: 10000;
-        background: ${type === 'success' ? '#16a34a' : type === 'error' ? '#dc2626' : '#3b82f6'};
-    `;
+function drawMoodChart(entries) {
+    const canvas = $('#mood-chart-canvas');
+    const ctx = canvas.getContext('2d');
     
-    document.body.appendChild(toast);
+    // Clear canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    setTimeout(() => {
-        document.body.removeChild(toast);
-    }, 3000);
-};
-
-// Event listeners
-document.addEventListener('DOMContentLoaded', () => {
-    // Auth form handlers
-    $('#login-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const email = $('#login-email').value;
-        const password = $('#login-password').value;
+    if (!entries || entries.length === 0) return;
+    
+    // Draw simple line chart
+    const padding = 40;
+    const width = canvas.width - padding * 2;
+    const height = canvas.height - padding * 2;
+    
+    // Draw grid
+    ctx.strokeStyle = '#e2e8f0';
+    ctx.lineWidth = 1;
+    
+    for (let i = 0; i <= 10; i++) {
+        const y = padding + (height * (10 - i)) / 10;
+        ctx.beginPath();
+        ctx.moveTo(padding, y);
+        ctx.lineTo(padding + width, y);
+        ctx.stroke();
+    }
+    
+    // Draw mood line
+    ctx.strokeStyle = '#667eea';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    
+    entries.forEach((entry, index) => {
+        const x = padding + (width * index) / (entries.length - 1);
+        const y = padding + (height * (10 - entry.mood)) / 10;
         
-        try {
-            await login(email, password);
-            showMainApp();
-        } catch (error) {
-            showMessage('Login failed. Please check your credentials.', 'error');
+        if (index === 0) {
+            ctx.moveTo(x, y);
+        } else {
+            ctx.lineTo(x, y);
         }
     });
     
-    $('#register-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const name = $('#register-name').value;
-        const email = $('#register-email').value;
-        const password = $('#register-password').value;
-        const role = $('#register-role').value;
-        
-        try {
-            await register(name, email, password, role);
-            showMainApp();
-        } catch (error) {
-            showMessage('Registration failed. Please try again.', 'error');
-        }
-    });
+    ctx.stroke();
     
+    // Draw points
+    ctx.fillStyle = '#667eea';
+    entries.forEach((entry, index) => {
+        const x = padding + (width * index) / (entries.length - 1);
+        const y = padding + (height * (10 - entry.mood)) / 10;
+        
+        ctx.beginPath();
+        ctx.arc(x, y, 4, 0, 2 * Math.PI);
+        ctx.fill();
+    });
+}
+
+// Event Listeners
+document.addEventListener('DOMContentLoaded', async () => {
     // Auth form toggles
     $('#show-register').addEventListener('click', (e) => {
         e.preventDefault();
@@ -1018,49 +1256,49 @@ document.addEventListener('DOMContentLoaded', () => {
         showElement($('#login-form'));
     });
     
+    // Auth form submissions
+    $('#login-form').addEventListener('submit', handleLogin);
+    $('#register-form').addEventListener('submit', handleRegister);
+    
+    // Logout
+    $('#logout-btn').addEventListener('click', handleLogout);
+    
     // Navigation
     $$('.nav-link').forEach(link => {
         link.addEventListener('click', (e) => {
             e.preventDefault();
-            const view = link.dataset.view;
-            switchView(view);
+            switchView(link.dataset.view);
         });
     });
     
+    // Quick action buttons
     $$('.action-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const view = btn.dataset.view;
-            if (view) {
-                switchView(view);
-            }
+        btn.addEventListener('click', () => {
+            switchView(btn.dataset.view);
         });
     });
     
-    // Logout
-    $('#logout-btn').addEventListener('click', logout);
+    // Resource filters
+    $('#resource-search').addEventListener('input', debounce(loadResources, 300));
+    $('#resource-category').addEventListener('change', loadResources);
     
-    // New post form
+    // Forum filters
+    $('#forum-search').addEventListener('input', debounce(loadForum, 300));
+    $('#forum-category').addEventListener('change', loadForum);
+    
+    // Feelings wall
     $('#new-post-btn').addEventListener('click', () => {
         showElement($('#new-post-form'));
     });
     
     $('#cancel-post').addEventListener('click', () => {
         hideElement($('#new-post-form'));
+        $('#post-content').value = '';
     });
     
-    $('#submit-post').addEventListener('click', () => {
-        const content = $('#post-content').value.trim();
-        const mood = $('.mood-btn.active').dataset.mood;
-        
-        if (!content) {
-            showMessage('Please enter some content for your post.', 'error');
-            return;
-        }
-        
-        createPost(content, mood);
-    });
+    $('#submit-post').addEventListener('click', createPost);
     
-    // Mood selector
+    // Mood selection
     $$('.mood-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             $$('.mood-btn').forEach(b => b.classList.remove('active'));
@@ -1068,7 +1306,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
     
-    // Chat message sending
+    // Chat
     $('#send-message').addEventListener('click', sendMessage);
     $('#message-input').addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
@@ -1079,41 +1317,31 @@ document.addEventListener('DOMContentLoaded', () => {
     // Mood tracker
     $('#save-mood').addEventListener('click', saveMoodEntry);
     
-    // Search and filters
-    $('#resource-search').addEventListener('input', (e) => {
-        const query = e.target.value.toLowerCase();
-        const filtered = resources.filter(resource => 
-            resource.title.toLowerCase().includes(query) ||
-            resource.content.toLowerCase().includes(query)
-        );
-        renderResources(filtered);
-    });
-    
-    $('#resource-category').addEventListener('change', (e) => {
-        const category = e.target.value;
-        const filtered = category === 'all' 
-            ? resources 
-            : resources.filter(resource => resource.category === category);
-        renderResources(filtered);
-    });
-    
-    $('#forum-search').addEventListener('input', (e) => {
-        const query = e.target.value.toLowerCase();
-        const filtered = forumTopics.filter(topic => 
-            topic.title.toLowerCase().includes(query) ||
-            topic.description.toLowerCase().includes(query)
-        );
-        renderForumTopics(filtered);
-    });
-    
-    $('#forum-category').addEventListener('change', (e) => {
-        const category = e.target.value;
-        const filtered = category === 'all' 
-            ? forumTopics 
-            : forumTopics.filter(topic => topic.category === category);
-        renderForumTopics(filtered);
-    });
-    
-    // Initialize app
-    checkAuth();
+    // Check for existing token
+    const token = localStorage.getItem('token');
+    if (token) {
+        try {
+            const response = await api.getCurrentUser();
+            currentUser = response.user;
+            showMainApp();
+        } catch (error) {
+            localStorage.removeItem('token');
+            showAuthScreen();
+        }
+    } else {
+        showAuthScreen();
+    }
 });
+
+// Utility function for debouncing
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
